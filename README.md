@@ -67,7 +67,8 @@ struct dheader_t
 2番目の整数は、BSPファイル形式のバージョン（BSPVERSION）です。 Source ゲームの場合、この値はVampire: The Masquerade – Bloodlinesを除いて19から21の範囲です（下記の表を参照）。他のエンジン（HL1、Quakeシリーズなど）のBSPファイル形式は、全く異なるバージョン番号の範囲を使用することに注意してください。  
 
 
-### バージョン  
+<h3 id="versions">バージョン</h2>
+  
 この表は、Source Engineを用いたいくつかのゲームで使用されているBSPバージョンの概要を示しています。 
 
 <table>
@@ -118,7 +119,7 @@ struct dheader_t
 				Half-Life 2
 			</a>
 		</td>
-		<td rowspan="4">リリース時は19で、Source 2007/2009<br>アップデートからは部分的に20</td>
+		<td rowspan="4">リリース時は19で、Source 2007/2009アップデートからは<br>部分的に20</td>
 	</tr>
 	<tr>
 		<td>
@@ -249,7 +250,7 @@ struct dheader_t
 				Dark Messiah
 			</a>
 		</td>
-		<td>dshader_t, StaticPropLump_t, texinfo_t, dgamelump_tに変更あり</td>
+		<td>dshader_t、StaticPropLump_t、texinfo_t、dgamelump_tに<br>変更あり</td>
 	</tr>
 	<tr>
 		<td>
