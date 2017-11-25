@@ -70,7 +70,7 @@ struct dheader_t
 // リトルエンディアン "VBSP"   0x50534256
 #define IDBSPHEADER	(('P'<<24)+('S'<<16)+('B'<<8)+'V')
 ```  
-したがって、ファイルの最初の4バイトは常に"VBSP"（ASCII形式）です。これらのバイトはファイルをValve BSPファイルとして識別します。他のBSPファイルの形式では、異なるマジックナンバーを使用します（例えば、id SoftwareのQuake Engineを用いたゲームは"IBSP"で始まります）。[GoldSrc]のBSP形式では、マジックナンバーはまったく使用されません。また、マジックナンバーの順序はファイルのエンディアンを決定するためにも使用できます。"VBSP"はリトルエンディアンに、"PSBV"はビッグエンディアンに使用されます。  
+したがって、ファイルの最初の4バイトは常に`VBSP`（ASCII形式）です。これらのバイトはファイルをValve BSPファイルとして識別します。他のBSPファイルの形式では、異なるマジックナンバーを使用します（例えば、id SoftwareのQuake Engineを用いたゲームは`IBSP`で始まります）。[GoldSrc]のBSP形式では、マジックナンバーはまったく使用されません。また、マジックナンバーの順序はファイルのエンディアンを決定するためにも使用できます。`VBSP`はリトルエンディアンに、`PSBV`はビッグエンディアンに使用されます。  
 
 2番目の整数は、BSPファイル形式のバージョン（BSPVERSION）です。 Source ゲームの場合、この値はVampire: The Masquerade – Bloodlinesを除いて19から21の範囲です（下記の表を参照）。他のエンジン（HL1、Quakeシリーズなど）のBSPファイル形式は、全く異なるバージョン番号の範囲を使用することに注意してください。
 
@@ -419,7 +419,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 
 <h3 id="lumptypes">Lumpの種類</h3>
 
-`lump_t`配列が指すデータの種類は、配列内の位置によって定義されます。例えば、配列の最初のLump**（Lump 0）**は常にBSPファイルのエンティティデータです（下記参照）。BSPファイル内の実際のデータの位置は、そのLumpのoffsetとlengthによって定義されるため、ファイル内で特定の順番に並んでいる必要はありません。例えば、エンティティデータはLump配列の最初にあるにも関わらず通常はBSPファイルの最後に格納されます。したがって、lump_tヘッダの配列はLumpデータに関するディレクトリのようなものであり、Lumpデータはファイル内を自由に配置することができます。  
+`lump_t`配列が指すデータの種類は、配列内の位置によって定義されます。例えば、配列の最初のLump **(Lump 0)** は常にBSPファイルのエンティティデータです（下記参照）。BSPファイル内の実際のデータの位置は、そのLumpのoffsetとlengthによって定義されるため、ファイル内で特定の順番に並んでいる必要はありません。例えば、エンティティデータはLump配列の最初にあるにも関わらず通常はBSPファイルの最後に格納されます。したがって、lump_tヘッダの配列はLumpデータに関するディレクトリのようなものであり、Lumpデータはファイル内を自由に配置することができます。  
 
 配列内におけるLumpの順番は以下のように定義されます。  
 
@@ -536,7 +536,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Orange Box - Valve Developer Community">Source 2007</a>
 		</td>
 		<td>LUMP_FACEIDS</td>
-		<td>dfaceとHammerの面IDの関連付けと、<br><a href="">detail prop</a>を配置するための乱数の種に使用</td>
+		<td>dfaceとHammerの面IDの関連付けと、<br><a href="">detail prop</a>を配置する時の乱数の種に使用</td>
 	</tr>
 	<tr><td>12</td><td>
 		<img src="https://developer.valvesoftware.com/w/images/4/41/Icon_hl2.png" 
@@ -821,7 +821,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Source - Valve Developer Community">Source 2004</a>
 		</td>
 		<td>LUMP_DISP_LIGHTMAP_SAMPLE_POSITIONS</td>
-		<td>Displacementのライトマップサンプルの位置</td>
+		<td>Displacementのライトマップサンプル位置</td>
 	</tr>
 	<tr><td>35</td><td>
 		<img src="https://developer.valvesoftware.com/w/images/4/41/Icon_hl2.png" 
