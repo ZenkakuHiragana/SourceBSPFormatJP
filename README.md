@@ -16,7 +16,12 @@ Valve Developer Communityにある[Source BSP File Formatのページ]を日本�
 	1. [Lumpの種類](#lumptypes)  
 	1. [Lumpの圧縮](#lumpcompression)  
 1. [Lump](#lumpheader)
-	1. [平面](#planes)
+	1. [平面](#plane)
+	1. [頂点](#vertex)
+	1. [辺](#edge)
+	1. [Surfedge](#surfedge)
+	1. [面と元の面](#faceandoriginalface)
+	1. [ブラシとブラシ側面](#brushandbrushside)
 
 
 <h2 id="introduction">前書き</h2>
@@ -1148,12 +1153,129 @@ struct lzma_header_t
 <br><br>
 
 <h1 id="lumpheader">Lump</h1>
-<h2 id="planes">平面</h3>
+<h2 id="plane">平面</h3>
 
 BSPジオメトリの基底は、BSP木構造全体の分割面として使われる平面によって定義されます。
 
+平面Lump **(Lump 1)** は`dplane_t`構造体の配列です。
+``` C++
+struct dplane_t
+{
+	Vector	normal;	// 法線ベクトル
+	float	dist;	// 原点からの距離
+	int	type;	// 平面軸識別子(?)
+};
+```
+[Vector]型は以下のように定義される3次元ベクトルです。
+``` C++
+struct Vector
+{
+	float x;
+	float y;
+	float z;
+};
+```
+float型は4バイトの長さを持つため、1つの平面につきサイズは20バイトで、平面Lumpのサイズは20の倍数です。
 
-以下翻訳中……  
+平面は、その面に垂直な単位ベクトル（長さが1.0のベクトル）である法線ベクトルを示す要素`normal`によって表現されます。平面の位置は、マップの原点（0, 0, 0）から平面上の最も近い点までの距離`dist`によって与えられます。
+
+数学的には、平面は方程式  
+	Ax + By + Cz = D  
+を満たす点(x, y, z)の集合として記述されます。ここで、点(A, B, C)は平面の法線ベクトル、すなわち`normal`で、Dは`dist`です。各平面は無限に広がっていて、マップ全体を平面の上（F = 0）、平面の前（F > 0）、平面の後ろ（F < 0）の3つに分割します。
+
+平面は特定の向きを持ち、それによって平面の前と後ろが対応づけられます。また、平面の向きを反転するにはA、B、C、Dの各要素を反転します。
+
+この構造体の`type`メンバは座標軸に垂直な平面を示すフラグが含まれているようですが、通常は使用されません。
+
+マップには最大で65536枚の平面が存在します（MAX_MAP_PLANES）。
+
+
+<h2 id="vertex">頂点</h2>
+
+頂点Lump **(Lump 3)** はマップジオメトリのブラシのすべての頂点（コーナー）座標の配列です。各頂点は3つの浮動小数点数からなる`Vector`型で表され、1つにつき12バイトのサイズを持ちます。
+
+2つの面で頂点が正確に一致する場合、頂点はそれらの面で共有されることに注意してください。
+
+マップには最大で65536個の頂点が存在します（MAX_MAP_VERTS）。
+
+
+<h2 id="edge">辺</h2>
+
+辺Lump **(Lump 12)** はdedge_t構造体の配列です。
+``` C++
+struct dedge_t
+{
+	unsigned short	v[2];	// 頂点インデックス
+};
+```
+各辺は単なる頂点インデックス（頂点Lumpの配列へのインデックス）の組です。辺は2頂点間の直線として定義されます。通常、辺LumpはSurfedge配列を介して参照されます（下記参照）。
+
+頂点と同じように、隣接する面の間で辺を共有することができます。
+
+マップには最大で256000本の辺が存在します（MAX_MAP_EDGES）。
+
+
+<h2 id="surfedge">Surfedge</h2>
+
+「Surface edge lump」の略であると推定されるSurfedge Lump **(Lump 13)** は（符号付きの）整数の配列です。Surfedgeはやや複雑な方法で辺の配列を参照するために使用されます。Surfedge配列は正または負の値を取ります。この数値の絶対値は辺の配列へのインデックスです。もしこの数値が正の数である場合は、辺が最初の頂点から2番めの頂点の方向に定義されていることを意味しています。負の数の場合は、2番めの頂点から最初の頂点へ向かうように定義されています。
+
+この方法により、Surfedge配列は辺を特定の方向に向かうように参照できます（辺を方向づけする理由については、以下の面の項目を参照してください）。
+
+1つのマップに付き512000個のSurfedgeまでという制限があります（MAX_MAP_SURFEDGES）。ただし、Surfedgeの数は必ずしもマップの辺の数と同じではありません。
+
+
+<h2 id="faceandoriginalface">面と元の面</h2>
+
+面Lump **(Lump 7)** にはプレイヤーの視点をレンダリングするためにゲームエンジンによって使用されるマップの主要なジオメトリを含まれます。面LumpにはBSP分割処理を行った後の面が含まれています。したがって、面Lumpに含まれる面はHammer Editorで作成されたブラシの面には直接対応しません。また、面は常に平らな凸多角形ですが、同一直線上にある頂点を含むことができます。
+
+面Lumpはマップファイルの中でも複雑な構造の1つです。このLumpは、56バイトの長さを持つ`dface_t`の配列です。
+``` C++
+struct dface_t
+{
+	unsigned short	planenum;			// 平面番号
+	byte		side;				// 面の向きと平面番号による平面の向きが反対なら1
+	byte		onNode;				// 節ノードにあるなら1、葉ノードにあるなら0
+	int		firstedge;			// Surfedge Lumpへのインデックス
+	short		numedges;			// 面を構成するSurfedgeの数
+	short		texinfo;			// テクスチャ情報
+	short		dispinfo;			// Displacement情報
+	short		surfaceFogVolumeID;		// ?
+	byte		styles[4];			// 切り替え可能なライティングの情報
+	int		lightofs;			// ライトマップLumpへのオフセット
+	float		area;				// 面の面積（単位はHammer units^2）
+	int		LightmapTextureMinsInLuxels[2];	// テクスチャライティング情報
+	int		LightmapTextureSizeInLuxels[2];	// テクスチャライティング情報
+	int		origFace;			// この面の分割元となった元の面
+	unsigned short	numPrims;			// プリミティブ
+	unsigned short	firstPrimID;
+	unsigned int	smoothingGroups;		// ライトマップスムージンググループ
+};
+```
+最初のメンバである`planenum`は平面番号（この面と位置の合う平面Lumpへのインデックス）です。この時、参照された平面がこの面と同じ方向を向いている場合、`side`は0です。そうでない場合は、非ゼロです。
+
+[![facexray](https://developer.valvesoftware.com/w/images/f/ff/Bsp_geometry_s.gif)](https://developer.valvesoftware.com/wiki/File:Bsp_geometry_s.gif)
+
+(3つのタイプのジオメトリデータを用いたd1_trainstation_01のX線ビューをアニメーションしたもの。[フルサイズで見るにはこちら。](https://developer.valvesoftware.com/w/images/f/f8/Bsp_geometry.gif))
+
+`firstedge`はSurfedge配列へのインデックスです。Surfedge配列内の`firstedge`番目のエントリからそれに続く`numedges`個のSurfedgeが面を構成する辺を定義します。上で述べたように、Surfedge配列の値が正か負かは、辺の配列に格納された対応する頂点の組をどちらの方向にたどるかを示します。したがって、面を構成する頂点は面に向かって見ると時計回りの順になるように参照されます。これによって面のレンダリングが容易になり、視点から離れた面を高速に間引きすることができます。
+
+`texinfo`はTexInfo配列へのインデックスで（以下参照）、面に描かれるべきテクスチャを示します。`dispinfo`はDispInfo配列へのインデックスで、0以上の時は面はDisplacementであり、Displacementの境界を定義します。そうでない場合は、`dispinfo`は-1です。`surfaceFogVolumeID`はプレイヤーの視点が水中にあるか水面を見ている時にフォグを描画することに関係しているように思われます。
+
+`origFace`はこの面の分割される元となった「元の面（Original Face）」へのインデックスです。`numPrims`と`firstPrimID`は「非ポリゴンプリミティブ」（以下参照）の描画に関連しています。`dface_t`構造体の他のメンバは、面のライティング情報を参照するために使用されます（下記のライティングLumpを参照）。
+
+面の配列のエントリ数は65536枚に制限されています（MAX_MAP_FACES）。
+
+元の面Lump **(Lump 27)** は面Lumpと同じ構造を持ちますが、BSP分割処理が行われる前の面の配列が含まれています。したがって、これらの面は面の配列よりもマップのコンパイル前に存在する元のブラシ面に近く、また面の数はより少ないです。元の面の`origFace`エントリはすべて0です。また、元の面の配列のエントリ数も最大で65536枚です。
+
+面と元の面の両方がカリングされます。つまり、マップのコンパイル前に存在する多くの面（主にマップの境界より外側の方を向いている面）が配列から削除されます。
+
+
+<h2 id="brushandbrushside">ブラシとブラシ側面</h2>
+
+ブラシLump **(Lump 18)** にはコンパイル前のVMFファイルに含まれていたすべてのブラシが含まれています。
+
+
+以下翻訳中……  
 
 [Source BSP File Formatのページ]: https://developer.valvesoftware.com/wiki/Source_BSP_File_Format "Source BSP File Format - Valve Developer Community"
 [Rof]: https://developer.valvesoftware.com/wiki/User:Rof "User:Rof - Valve Developer Community"
@@ -1174,8 +1296,4 @@ BSPジオメトリの基底は、BSP木構造全体の分割面として使わ�
 [Alien Swarm Icon]: https://developer.valvesoftware.com/w/images/c/c9/AS-16px.png "Alien Swarm Icon"
 [GoldSrc]: https://developer.valvesoftware.com/wiki/GoldSrc "GoldSrc - Valve Developer Community"
 [Source BSP File Format/Game-Specific]: https://developer.valvesoftware.com/wiki/Source_BSP_File_Format/Game-Specific "Source BSP File Format/Game-Specific - Valve Developer Community"
-[hl2]: https://developer.valvesoftware.com/w/images/4/41/Icon_hl2.png "Half-Life 2 Icon"
-[tf2]: https://developer.valvesoftware.com/w/images/8/84/Tf2-16px.png "Team Fortress 2 Icon"
-[ld2]: https://developer.valvesoftware.com/w/images/9/93/L4D2-16px.png "Left 4 Dead 2 Icon"
-[l4d]: https://developer.valvesoftware.com/w/images/c/c0/L4D-16px.png "Left 4 Dead Icon"
-[confirm]: https://developer.valvesoftware.com/w/images/2/2e/Confirm.png "Confirm"
+[Vector]: https://developer.valvesoftware.com/wiki/Vector "Vector - Valve Developer Community"
