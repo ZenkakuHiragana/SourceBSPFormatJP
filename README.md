@@ -71,7 +71,7 @@ BSPファイルには、マップをレンダリングして遊ぶためにSourc
 
 また、マップファイルにはレベルで使用されているカスタムテクスチャやモデルをマップのPakfile lumpの中に任意で埋め込むこともできます（下記参照）。  
 
-BSPファイルに格納されていない情報として、マルチプレイヤーゲーム（[Counter-Strike: Source]や[Half-Life 2: Deathmatch]など）でマップを読み込んだ後に表示されるマップの説明テキスト（*mapname.txt*に格納されています）と、ノンプレイヤーキャラクター（NPC、マップをナビゲートする必要がある）が使用するAIナビゲーションファイル（*mapname.nav*に格納されています）があります。Souce Engineのファイルシステムの仕組み上、これらの外部ファイルはBSPファイルの[Pakfile](#Pakfile) lumpに埋め込まれることもありますが、通常はそうではありません。  
+BSPファイルに格納されていない情報として、マルチプレイヤーゲーム（[Counter-Strike: Source]や[Half-Life 2: Deathmatch]など）でマップを読み込んだ後に表示されるマップの説明テキスト（*mapname.txt*に格納されています）と、ノンプレイヤーキャラクター（NPC、マップをナビゲートする必要がある）が使用するAIナビゲーションファイル（*mapname.nav*に格納されています）があります。Souce Engineのファイルシステムの仕組み上、これらの外部ファイルはBSPファイルの[Pakfile](#pakfile) lumpに埋め込まれることもありますが、通常はそうではありません。  
 
 公式マップのファイルは、[Steam Game Cache File（GCF）]形式で保存され、ゲームエンジンによりSteamファイルシステムを通じてアクセスされます。GCFファイルから中身を抽出してSteam外から閲覧するには、Nemesisの[GCFScape]を使用します。[VPK]ファイル形式を使用している新しいゲームでは通常、マップはオペレーティングシステムのファイルシステムに直接保存されます。  
 
@@ -1542,7 +1542,9 @@ struct dmodel_t
 
 <h2 id="entity">エンティティ</h2>
 
-エンティティLump **(Lump 0)** はエンティティのデータをコンパイル前のVMFファイルにあるKeyValueフォーマットに非常によく似た形式で格納するASCIIテキストバッファです。
+	*関連:* [Patching levels with lump files]
+
+エンティティLump **(Lump 0)** はエンティティのデータをコンパイル前の[VMF]ファイルにある[KeyValue]フォーマットに非常によく似た形式で格納するASCIIテキストバッファです。
 
 
 <h2 id="gamelump">ゲームLump</h2>
@@ -1552,7 +1554,7 @@ struct dmodel_t
 
 <h3 id="staticprops">静的Prop</h3>
 
-興味深いのは、「scrp」（ASCII表記、10進数で1936749168）というGamelump IDを用いるprop_staticエンティティの格納に使われるGamelumpです。
+興味深いのは、「scrp」（ASCII表記、10進数で1936749168）というGamelump IDを用いる[prop_static]エンティティの格納に使われるGamelumpです。
 
 
 <h3 id="othergame">その他</h3>
@@ -1625,7 +1627,7 @@ Cubemap Lump **(Lump 42)** は16バイトの`dcubemapsample_t`構造体の配列
 
 <h2 id="occlusion">オクルージョン</h2>
 
-オクルージョンLump **(Lump 9)** にはポリゴンジオメトリとfunc_occluderエンティティで使用されるいくつかのフラグが含まれています。
+オクルージョンLump **(Lump 9)** にはポリゴンジオメトリと[func_occluder]エンティティで使用されるいくつかのフラグが含まれています。
 
 
 <h2 id="physics">Physics</h2>
@@ -1665,3 +1667,9 @@ Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含�
 [「BSP for dummies」]: http://web.archive.org/web/20050426034532/http://www.planetquake.com/qxx/bsp/ "BSP for Dummies - WebArchive.org"
 [テクセル]: https://developer.valvesoftware.com/wiki/Texel "Texel - Valve Developer Community"
 [u, v]: https://developer.valvesoftware.com/wiki/UV_map "UV map - Valve Developer Community"
+
+[Patching levels with lump files]: https://developer.valvesoftware.com/wiki/Patching_levels_with_lump_files "Patching levels with lump files - Valve Developer Community"
+[KeyValue]: https://developer.valvesoftware.com/wiki/Keyvalue "Keyvalue - Valve Developer Community"
+[prop_static]: https://developer.valvesoftware.com/wiki/Prop_static "prop_static - Valve Developer Community"
+
+[func_occluder]: https://developer.valvesoftware.com/wiki/Func_occluder "func_occluder - Valve Develoepr Community"
