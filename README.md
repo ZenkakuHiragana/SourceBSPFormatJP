@@ -22,6 +22,10 @@ Valve Developer Communityにある[Source BSP File Formatのページ]を日本�
 	1. [Surfedge](#surfedge)
 	1. [面と元の面](#faceandoriginalface)
 	1. [ブラシとブラシ側面](#brushandbrushside)
+	1. [ノードとリーフ](#nodeandleaf)
+	1. [リーフ面とリーフブラシ](#leaffaceandleafbrush)
+	1. [テクスチャ](#textures)
+		1. [Texinfo](#texinfo)
 
 
 <h2 id="introduction">前書き</h2>
@@ -42,12 +46,12 @@ BSPファイルには、マップをレンダリングして遊ぶためにSourc
 * レベル内のすべてのポリゴンのジオメトリ  
 * 各ポリゴンが描画される時に用いるテクスチャの名前と方向  
 * ゲーム中にプレイヤーや他のアイテムの物理的挙動をシミュレートするために使われるデータ
-* マップ内のすべてのブラシベース、モデル（プロップ）ベース、非可視（論理）エンティティの位置とプロパティ  
+* マップ内のすべてのブラシベース、モデル（プロップ）ベース、不可視（論理）エンティティの位置とプロパティ  
 * BSP木と可視性テーブル（マップジオメトリ内のプレイヤーの位置の特定と、マップの見える範囲を可能な限り効率的にレンダリングするのに使用）  
 
 また、マップファイルにはレベルで使用されているカスタムテクスチャやモデルをマップのPakfile lumpの中に任意で埋め込むこともできます（下記参照）。  
 
-BSPファイルに格納されていない情報として、マルチプレイヤーゲーム（[Counter-Strike: Source]や[Half-Life 2: Deathmatch]など）でマップを読み込んだ後に表示されるマップの説明テキスト（*mapname.txt*に格納されています）と、ノンプレイヤーキャラクター（NPC, マップをナビゲートする必要がある）が使用するAIナビゲーションファイル（*mapname.nav*に格納されています）があります。Souce Engineのファイルシステムの仕組み上、これらの外部ファイルはBSPファイルの[Pakfile](#Pakfile) lumpに埋め込まれることもありますが、通常はそうではありません。  
+BSPファイルに格納されていない情報として、マルチプレイヤーゲーム（[Counter-Strike: Source]や[Half-Life 2: Deathmatch]など）でマップを読み込んだ後に表示されるマップの説明テキスト（*mapname.txt*に格納されています）と、ノンプレイヤーキャラクター（NPC、マップをナビゲートする必要がある）が使用するAIナビゲーションファイル（*mapname.nav*に格納されています）があります。Souce Engineのファイルシステムの仕組み上、これらの外部ファイルはBSPファイルの[Pakfile](#Pakfile) lumpに埋め込まれることもありますが、通常はそうではありません。  
 
 公式マップのファイルは、[Steam Game Cache File（GCF）]形式で保存され、ゲームエンジンによりSteamファイルシステムを通じてアクセスされます。GCFファイルから中身を抽出してSteam外から閲覧するには、Nemesisの[GCFScape]を使用します。[VPK]ファイル形式を使用している新しいゲームでは通常、マップはオペレーティングシステムのファイルシステムに直接保存されます。  
 
@@ -77,7 +81,7 @@ struct dheader_t
 ```  
 したがって、ファイルの最初の4バイトは常に`VBSP`（ASCII形式）です。これらのバイトはファイルをValve BSPファイルとして識別します。他のBSPファイルの形式では、異なるマジックナンバーを使用します（例えば、id SoftwareのQuake Engineを用いたゲームは`IBSP`で始まります）。[GoldSrc]のBSP形式では、マジックナンバーはまったく使用されません。また、マジックナンバーの順序はファイルのエンディアンを決定するためにも使用できます。`VBSP`はリトルエンディアンに、`PSBV`はビッグエンディアンに使用されます。  
 
-2番目の整数は、BSPファイル形式のバージョン（BSPVERSION）です。 Source ゲームの場合、この値はVampire: The Masquerade – Bloodlinesを除いて19から21の範囲です（下記の表を参照）。他のエンジン（Half-Life 1、Quakeシリーズなど）のBSPファイル形式は、全く異なるバージョン番号の範囲を使用することに注意してください。
+2番目のint値は、BSPファイル形式のバージョン（BSPVERSION）です。 Source ゲームの場合、この値はVampire: The Masquerade – Bloodlinesを除いて19から21の範囲です（下記の表を参照）。他のエンジン（Half-Life 1、Quakeシリーズなど）のBSPファイル形式は、全く異なるバージョン番号の範囲を使用することに注意してください。
 
 
 <h3 id="versions">バージョン</h3>
@@ -404,10 +408,9 @@ struct dheader_t
 
 <h3 id="lumpstructures">Lump構造体</h3>  
 
-次に、16バイトの`lump_t`構造体の配列が続きます。HEADER_LUMPSは64と定義されているため、全部で64個のエントリがあります。ただし、ゲームやバージョンによっては定義されていないものや空のものがあります。  
+次に、16バイトの`lump_t`構造体の配列が続きます。HEADER_LUMPSは64と定義されているため、全部で64個の要素があります。ただし、ゲームやバージョンによっては定義されていないものや空のものもあります。  
 
 各`lump_t`は*bspfile.h*で定義されています。  
-
 ``` C++
 struct lump_t
 {
@@ -417,8 +420,7 @@ struct lump_t
 	char	fourCC[4];	// Lump識別子
 };
 ```
-
-最初の2つの整数はbspファイルの先頭からのバイトオフセットとそのLumpに含まれるデータブロックのバイト長を表します。続いて、そのLumpの形式のバージョン番号（通常は0）と、通常0, 0, 0, 0である4バイトの識別子があります。圧縮されたLumpの場合、fourCCには非圧縮のLumpデータサイズが整数で示されています（詳細は[Lumpの圧縮](#lumpcompression)の節を参照）。lump_t配列の未使用のメンバについてはすべての要素が0に設定されています。  
+最初の2つのint値はbspファイルの先頭からのバイトオフセットとそのLumpに含まれるデータブロックのバイト長を表します。続いて、そのLumpの形式のバージョン番号（通常は0）と、通常0, 0, 0, 0である4バイトの識別子があります。圧縮されたLumpの場合、fourCCには非圧縮のLumpデータサイズが整数で示されています（詳細は[Lumpの圧縮](#lumpcompression)の節を参照）。lump_t配列の未使用のメンバについてはすべての要素が0に設定されています。  
 Lumpのオフセット（と、それに対応するデータ）は最も近い4バイトの境界に切り上げられています。ただし、Lumpの長さについてはこの限りではありません。  
 
 
@@ -487,7 +489,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Source - Valve Developer Community">Source 2004</a>
 		</td>
 		<td>LUMP_NODES</td>
-		<td>BSP木の節ノード</td>
+		<td>BSP木のノード</td>
 	</tr>
 	<tr><td>6</td><td>
 		<img src="https://developer.valvesoftware.com/w/images/4/41/Icon_hl2.png" 
@@ -532,7 +534,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Source - Valve Developer Community">Source 2004</a>
 		</td>
 		<td>LUMP_LEAFS</td>
-		<td>BSP木の葉ノード</td>
+		<td>BSP木の葉ノード（リーフ）</td>
 	</tr>
 	<tr><td>11</td><td>
 		<img src="https://developer.valvesoftware.com/w/images/8/84/Tf2-16px.png" 
@@ -670,7 +672,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Source - Valve Developer Community">Source 2004</a>
 		</td>
 		<td>LUMP_CLUSTERS</td>
-		<td>プレイヤーが入れる葉ノード</td>
+		<td>プレイヤーが入れるリーフ</td>
 	</tr>
 	<tr><td>
 		<img src="https://developer.valvesoftware.com/w/images/8/84/Tf2-16px.png" 
@@ -844,7 +846,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Source - Valve Developer Community">Source 2004</a>
 		</td>
 		<td>LUMP_LEAFWATERDATA</td>
-		<td>水中の葉ノードのためのデータ</td>
+		<td>水中のリーフのためのデータ</td>
 	</tr>
 	<tr><td>37</td><td>
 		<img src="https://developer.valvesoftware.com/w/images/4/41/Icon_hl2.png" 
@@ -934,7 +936,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Source - Valve Developer Community">Source 2004</a>
 		</td>
 		<td>LUMP_LEAFMINDISTTOWATER</td>
-		<td>葉ノードから水までの距離</td>
+		<td>リーフから水までの距離</td>
 	</tr>
 	<tr><td>47</td><td>
 		<img src="https://developer.valvesoftware.com/w/images/4/41/Icon_hl2.png" 
@@ -1045,7 +1047,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Episode One (engine branch) - Valve Developer Community">Source 2006</a>
 		</td>
 		<td>LUMP_LEAF_AMBIENT_LIGHTING_HDR</td>
-		<td>葉ノードごとのアンビエントライト<br>サンプル（HDR）</td>
+		<td>リーフごとのアンビエントライト<br>サンプル（HDR）</td>
 	</tr>
 	<tr><td>56</td><td>
 		<img src="https://developer.valvesoftware.com/w/images/4/41/Icon_hl2.png" 
@@ -1054,7 +1056,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 		   title="Episode One (engine branch) - Valve Developer Community">Source 2006</a>
 		</td>
 		<td>LUMP_LEAF_AMBIENT_LIGHTING</td>
-		<td>葉ノードごとのアンビエントライト<br>サンプル（LDR）</td>
+		<td>リーフごとのアンビエントライト<br>サンプル（LDR）</td>
 	</tr>
 	<tr><td>57</td><td>
 		<img src="https://developer.valvesoftware.com/w/images/4/41/Icon_hl2.png" 
@@ -1122,9 +1124,9 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 </table>
 
 Lump 53～56はバージョン20以上のBSPファイルでのみ使用されます。Lump 22～25はバージョン20では使用されていません。
-既知のエントリについて、データLumpの構造を以下に説明します。Lumpの多くは単純な構造の配列で、またいくつかはその内容に応じて可変長です。各データの最大サイズまたはエントリ数は*bspfile.h*でもMAX_MAP_\*として定義されています。
+既知の要素について、データLumpの構造を以下に説明します。Lumpの多くは単純な構造の配列で、またいくつかはその内容に応じて可変長です。各データの最大サイズまたは要素数は*bspfile.h*でもMAX_MAP_\*として定義されています。
 
-最後に、ヘッダはマップリビジョン番号を表す整数で終わります。この数値は、マップのvmfファイルのリビジョン番号（`mapversion`）に基いています。これは、Hammer Editorで保存される度に増加する値です。
+最後に、ヘッダはマップリビジョン番号を表すint値で終わります。この数値は、マップのvmfファイルのリビジョン番号（`mapversion`）に基いています。これは、Hammer Editorで保存される度に増加する値です。
 
 ヘッダのすぐ後ろには、最初のデータLumpが続いています。実際には最初のデータLumpはLump 1（平面データ配列）ですが、これは前のリスト中ののoffsetフィールドで指定された任意のLumpです。
 
@@ -1132,7 +1134,6 @@ Lump 53～56はバージョン20以上のBSPファイルでのみ使用されま
 <h3 id="lumpcompression">Lumpの圧縮</h3>
 
 PlayStation 3やXbox 360などのコンソールプラットフォーム用のBSPファイルは通常、LZMAで圧縮されたLumpを格納しています。この場合、Lumpデータは次のヘッダで始まります（*public/tier1/lzmaDecoder.h*より）。
-
 ``` C++
 struct lzma_header_t
 {
@@ -1142,20 +1143,18 @@ struct lzma_header_t
 	unsigned char	properties[5];
 };
 ```
-
 `id`は以下のように定義されています。
 ``` C++
 // リトルエンディアン "LZMA"
 #define LZMA_ID	(('A'<<24)|('M'<<16)|('Z'<<8)|('L'))
 ```
-
-圧縮に関して、2つのスペシャルケースがあります。`LUMP_PAKFILE`は決して圧縮されず、`LUMP_GAME_LUMP`の各ゲームLumpは個別に圧縮されます。圧縮されたゲームLumpのサイズは、現在のゲームLumpのオフセットを次のエントリのオフセットから引くことで決めることができます。このため、最後のゲームLumpは常にオフセットを含む空のダミーです。
+圧縮に関して、2つのスペシャルケースがあります。`LUMP_PAKFILE`は決して圧縮されず、`LUMP_GAME_LUMP`の各ゲームLumpは個別に圧縮されます。圧縮されたゲームLumpのサイズは、現在のゲームLumpのオフセットを次のもののオフセットから引くことで決めることができます。このため、最後のゲームLumpは常にオフセットを含む空のダミーです。
 <br><br>
 
 <h1 id="lumpheader">Lump</h1>
 <h2 id="plane">平面</h3>
 
-BSPジオメトリの基底は、BSP木構造全体の分割面として使われる平面によって定義されます。
+BSPジオメトリの基礎は、BSP木構造全体の分割面として使われる平面によって定義されます。
 
 平面Lump **(Lump 1)** は`dplane_t`構造体の配列です。
 ``` C++
@@ -1234,7 +1233,7 @@ struct dface_t
 {
 	unsigned short	planenum;			// 平面番号
 	byte		side;				// 面の向きと平面番号による平面の向きが反対なら1
-	byte		onNode;				// 節ノードにあるなら1、葉ノードにあるなら0
+	byte		onNode;				// ノードにあるなら1、リーフにあるなら0
 	int		firstedge;			// Surfedge Lumpへのインデックス
 	short		numedges;			// 面を構成するSurfedgeの数
 	short		texinfo;			// テクスチャ情報
@@ -1257,22 +1256,180 @@ struct dface_t
 
 (3つのタイプのジオメトリデータを用いたd1_trainstation_01のX線ビューをアニメーションしたもの。[フルサイズで見るにはこちら。](https://developer.valvesoftware.com/w/images/f/f8/Bsp_geometry.gif))
 
-`firstedge`はSurfedge配列へのインデックスです。Surfedge配列内の`firstedge`番目のエントリからそれに続く`numedges`個のSurfedgeが面を構成する辺を定義します。上で述べたように、Surfedge配列の値が正か負かは、辺の配列に格納された対応する頂点の組をどちらの方向にたどるかを示します。したがって、面を構成する頂点は面に向かって見ると時計回りの順になるように参照されます。これによって面のレンダリングが容易になり、視点から離れた面を高速に間引きすることができます。
+`firstedge`はSurfedge配列へのインデックスです。`firstedge`番目のSurfedgeからそれに続く`numedges`個のSurfedgeが面を構成する辺を定義します。上で述べたように、Surfedge配列の値が正か負かは、辺の配列に格納された対応する頂点の組をどちらの方向にたどるかを示します。したがって、面を構成する頂点は面に向かって見ると時計回りの順になるように参照されます。これによって面のレンダリングが容易になり、視点から離れた面を高速に間引きすることができます。
 
-`texinfo`はTexInfo配列へのインデックスで（以下参照）、面に描かれるべきテクスチャを示します。`dispinfo`はDispInfo配列へのインデックスで、0以上の時は面はDisplacementであり、Displacementの境界を定義します。そうでない場合は、`dispinfo`は-1です。`surfaceFogVolumeID`はプレイヤーの視点が水中にあるか水面を見ている時にフォグを描画することに関係しているように思われます。
+`texinfo`はTexInfo配列へのインデックスで（以下参照）、面に描かれるべきテクスチャを示します。`dispinfo`はDispInfo配列へのインデックスで、0以上の場合は面はDisplacementであり、Displacementの境界を定義します。そうでない場合は、`dispinfo`は-1です。`surfaceFogVolumeID`はプレイヤーの視点が水中にあるか水面を見ている時にフォグを描画することに関係しているように思われます。
 
 `origFace`はこの面の分割される元となった「元の面（Original Face）」へのインデックスです。`numPrims`と`firstPrimID`は「非ポリゴンプリミティブ」（以下参照）の描画に関連しています。`dface_t`構造体の他のメンバは、面のライティング情報を参照するために使用されます（下記のライティングLumpを参照）。
 
-面の配列のエントリ数は65536枚に制限されています（MAX_MAP_FACES）。
+面の数は65536枚に制限されています（MAX_MAP_FACES）。
 
-元の面Lump **(Lump 27)** は面Lumpと同じ構造を持ちますが、BSP分割処理が行われる前の面の配列が含まれています。したがって、これらの面は面の配列よりもマップのコンパイル前に存在する元のブラシ面に近く、また面の数はより少ないです。元の面の`origFace`エントリはすべて0です。また、元の面の配列のエントリ数も最大で65536枚です。
+元の面Lump **(Lump 27)** は面Lumpと同じ構造を持ちますが、BSP分割処理が行われる前の面の配列が含まれています。したがって、これらの面は面の配列よりもマップのコンパイル前に存在する元のブラシ面に近く、また面の数はより少ないです。元の面の`origFace`はすべて0です。また、元の面の配列の要素数も最大で65536枚です。
 
 面と元の面の両方がカリングされます。つまり、マップのコンパイル前に存在する多くの面（主にマップの境界より外側の方を向いている面）が配列から削除されます。
 
 
 <h2 id="brushandbrushside">ブラシとブラシ側面</h2>
 
-ブラシLump **(Lump 18)** にはコンパイル前のVMFファイルに含まれていたすべてのブラシが含まれています。
+ブラシLump **(Lump 18)** にはコンパイル前のVMFファイルに含まれていたすべての[ブラシ]が含まれています。面とは異なり、ブラシは辺や頂点の代わりに平面を使う[空間領域構成法（CSG）]で定義されています。Source BSPファイルにはブラシとブラシ側面のLumpが存在するため、この情報が存在しないGoldSrcのファイルよりもかなり容易に逆コンパイルできます。このLumpは12バイトの長さを持つ`dbrush_t`構造体の配列です。
+``` C++
+struct dbrush_t
+{
+	int	firstside;	// 最初のブラシ側面（へのインデックス）
+	int	numsides;	// ブラシ側面の数
+	int	contents;	// コンテンツフラグ
+};
+```
+最初のint値`firstside`はブラシ側面Lumpへのインデックスで、`firstside`番目のブラシ側面から`numsides`枚のブラシ側面がこのブラシのすべての側面を構成します。`contents`にはこのブラシの内容を決定するビットフラグが格納されています。値はビットOR演算されたもので、フラグは*public/bspflags.h*で定義されています。
+
+<table>
+	<tr>
+		<th align="center">名前</th>
+		<th align="center">値</th>
+		<th align="center">備考</th>
+	</tr>
+	<tr><td><code>CONTENTS_EMPTY</code></td><td>0</td><td>空の空間</td></tr>
+	<tr><td><code>CONTENTS_SOLID</code></td><td>0x1</td><td>固体の中では目が見えない</td></tr>
+	<tr><td><code>CONTENTS_WINDOW</code></td><td>0x2</td><td>半透明だが、水ではない（つまりガラス）</td></tr>
+	<tr><td><code>CONTENTS_AUX</code></td><td>0x4</td><td></td></tr>
+	<tr><td><code>CONTENTS_GRATE</code></td><td>0x8</td><td>アルファテストされた「鉄格子」のテクスチャで、弾丸と視線は通過するが、固体は通過しない</td></tr>
+	<tr><td><code>CONTENTS_SLIME</code></td><td>0x10</td><td></td></tr>
+	<tr><td><code>CONTENTS_WATER</code></td><td>0x20</td><td></td></tr>
+	<tr><td><code>CONTENTS_MIST</code></td><td>0x40</td><td></td></tr>
+	<tr><td><code>CONTENTS_OPAQUE</code></td><td>0x80</td><td>AIの視線を遮断する</td></tr>
+	<tr><td><code>CONTENTS_TESTFOGVOLUME</code></td><td>0x100</td><td>透けて見えないもの（固体ではないかもしれないにもかかわらず）</td></tr>
+	<tr><td><code>CONTENTS_UNUSED</code></td><td>0x200</td><td>未使用</td></tr>
+	<tr><td><code>CONTENTS_UNUSED6</code></td><td>0x400</td><td>未使用</td></tr>
+	<tr><td><code>CONTENTS_TEAM1</code></td><td>0x800</td><td rowspan="2">チームごとにプレイヤーやオブジェクトの衝突判定を区別するために使用される</td></tr>
+	<tr><td><code>CONTENTS_TEAM2</code></td><td>0x1000</td></tr>
+	<tr><td><code>CONTENTS_IGNORE_NODRAW_OPAQUE</code></td><td>0x2000</td><td><code>SURF_NODRAW</code>を持つ面では<code>CONTENTS_OPAQUE</code>を無視する</td></tr>
+	<tr><td><code>CONTENTS_MOVEABLE</code></td><td>0x4000</td><td><code>MOVETYPE_PUSH</code>のエンティティ（ドア、足場など）にあたる</td></tr>
+	<tr><td><code>CONTENTS_AREAPORTAL</code></td><td>0x8000</td><td>以下のフラグは不可視で、ブラシを侵食しない</td></tr>
+	<tr><td><code>CONTENTS_PLAYERCLIP</code></td><td>0x10000</td><td></td></tr>
+	<tr><td><code>CONTENTS_MONSTERCLIP</code></td><td>0x20000</td><td></td></tr>
+	<tr><td><code>CONTENTS_CURRENT_0</code></td><td>0x40000</td><td rowspan="6"></td>CURRENT系は他のフラグに追加されるもので、複数追加されることもある</tr>
+	<tr><td><code>CONTENTS_CURRENT_90</code></td><td>0x80000</td></tr>
+	<tr><td><code>CONTENTS_CURRENT_180</code></td><td>0x100000</td></tr>
+	<tr><td><code>CONTENTS_CURRENT_270</code></td><td>0x200000</td></tr>
+	<tr><td><code>CONTENTS_CURRENT_UP</code></td><td>0x400000</td></tr>
+	<tr><td><code>CONTENTS_CURRENT_DOWN</code></td><td>0x800000</td></tr>
+	<tr><td><code>CONTENTS_ORIGIN</code></td><td>0x1000000</td><td>エンティティをBSP処理する前に削除される</td></tr>
+	<tr><td><code>CONTENTS_MONSTER</code></td><td>0x2000000</td><td>ブラシに与えられるフラグではなく、ゲーム中に関わる</td></tr>
+	<tr><td><code>CONTENTS_DEBRIS</code></td><td>0x4000000</td><td></td></tr>
+	<tr><td><code>CONTENTS_DETAIL</code></td><td>0x8000000</td><td>VisLeaf処理の後にブラシに追加される</td></tr>
+	<tr><td><code>CONTENTS_TRANSLUCENT</code></td><td>0x10000000</td><td>面に透明度がある場合に自動的に付与</td></tr>
+	<tr><td><code>CONTENTS_LADDER</code></td><td>0x20000000</td><td></td></tr>
+	<tr><td><code>CONTENTS_HITBOX</code></td><td>0x40000000</td><td>トレースで正確なヒットボックスを使うためのもの(?)</td></tr>
+</table>
+
+これらのフラグの一部は、以前のゲームエンジンから引き継がれているように見え、Sourceのマップでは使われていないものもあります。また、これらのフラグはマップのリーフの中身について説明するためにも使われます（下記参照）。`CONTENTS_DETAIL`フラグはマップのコンパイル前に[func_detail]エンティティであったブラシをマークするために使われます。
+
+ブラシの配列の要素数は8192個に制限されています（MAX_MAP_BRUSHES）。
+
+ブラシ側面Lump **(Lump 19)** は8バイトの構造体の配列です。
+``` C++
+struct dbrushside_t
+{
+	unsigned short	planenum;	// リーフの外側を向いた平面
+	short		texinfo;	// テクスチャ情報
+	short		dispinfo;	// Displacementの情報
+	short		bevel;		// 側面が斜めなら1
+};
+```
+`planenum`は平面の配列へのインデックスで、そのブラシ側面に対応する平面を示します。`texinfo`と`dispinfo`はテクスチャとDisplacement情報のLumpへの参照を示します。`bevel`は普通のブラシ側面なら0ですが、斜面の場合は1です（衝突判定に使われるものと思われます）。
+
+面の配列とは異なり、ワールドの外を向いたブラシ側面はカリング（削除）されません。その代わり、コンパイル処理中にテクスチャ情報が`tools/[toolsnodraw]`に変更されます。ここで注意すべきことは、ブラシをレンダリングするのに使われる対応する面の配列の要素と、ブラシとブラシ側面とを関連付ける直接的な方法が存在しないことです。ブラシ側面はすべてのプレイヤーとワールドブラシとの衝突判定を計算するためにエンジンによって使われます（VPhysicsオブジェクトは代わりにLump 29が使われます）。
+
+ブラシ側面は最大で65536枚です（MAX_MAP_BRUSHSIDES）。また、ブラシごとのブラシ側面の最大数は128枚です（MAX_BRUSH_SIDES）。
+
+
+<h2 id="nodeandleaf">ノードとリーフ</h2>
+
+ノード配列 **(Lump 5)** とリーフ配列 **(Lump 10)** はマップのBSP木（Binary Space Partition Tree）を定義します。BSP木はマップのジオメトリに対するプレイヤーの視点の位置と、可視性情報（下記参照）からマップのどの部分が描画されるかを素早く決定するためにエンジンによって使用されます。
+
+ノードとリーフは木構造を構築します。各リーフはマップのボリュームを定義したものを表し、各ノードはすべての子ノードの総ボリュームを表します。
+
+各ノードには必ず2つの子ノードがあり、子ノードは別のノードかリーフです。子ノードさらに2つの別の子ノードを持っていて、これは木のすべての分岐がリーフを指すまで続きます。また、各ノードは平面の配列内にある平面も参照します。プレイヤーの視点を決定する時、エンジンは視点がどのリーフの中にあるかを探します。この時、根ノード（ノード0）が参照している平面と視点の座標を比較し、平面の前に視点がある場合は最初の子ノードへ、後ろにある場合は2番めの子ノードへ移動します。比較するノードがリーフになるまでこれを続けることで、視点がどのリーフの中に存在するかを判断することができます。したがって、エンジンは視点の位置が見つかるまでBSP木を走査します。そして、リーフは親ノードの平面によって定義される重ならない凸なボリュームとしてマップのボリュームを分割します。
+
+BSP木がどのように構築されるかについての詳細は、[「BSP for dummies」]の記事を参照してください。
+
+ノード配列は32バイトの構造体で構成されています。
+``` C++
+struct dnode_t
+{
+	int		planenum;	// 平面の配列へのインデックス
+	int		children[2];	// 負の値は -(leafs + 1)番目のリーフを表す
+	short		mins[3];	// 視錐台カリング用
+	short		maxs[3];
+	unsigned short	firstface;	// 面の配列へのインデックス
+	unsigned short	numfaces;	// 両面をカウントする
+	short		area;		// すべての子ノードが同じエリアの場合はエリアへのインデックス
+					// そうでない場合は-1
+	short		paddding;	// 32バイトの長さを持つpad(?)
+};
+```
+`planenum`は平面の配列の要素を表します。`children[]`メンバはこのノードが持つ2つの子ノードです。もしこの値が正なら、ノードへのインデックスで、負なら、 *-1-child*はリーフの配列へのインデックスを表します（例えば、-100は99番目のリーフを参照します）。
+
+`mins[]`と`maxs[]`メンバはノードを囲むバウンディングボックスの座標です。`firstface`と`numfaces`はこのノードに含まれているマップの面を表す面の配列へのインデックスです。0の場合は面が含まれていません。`area`の値はこのノードにおけるマップの面積です（下記参照）。マップには最大65536個のノードが存在します（MAX_MAP_NODES）。
+
+リーフ配列は要素が56バイトの長さを持つ配列です。
+``` C++
+struct dleaf_t
+{
+	int			contents;		// ブラシをすべてビットORしたもの（不必要？）
+	short			cluster;		// リーフ内のクラスタの数
+	short			area:9;			// リーフ内のエリアの数
+	short			flags:7;		// フラグ
+	short			mins[3];		// 視錐台カリング用
+	short			maxs[3];
+	unsigned short		firstleafface;		// リーフ面へのインデックス
+	unsigned short		numleaffaces;
+	unsigned short		firstleafbrush;		// リーフブラシへのインデックス
+	unsigned short		numleafbrushes;
+	short			leafWaterDataID;	// 水中でない場合は-1
+ 
+	//!!! バージョン19以前のマップは以下のコメントブロックを外す
+	/*
+	CompressedLightCube	ambientLighting;	// エンティティ用 計算済みのライティング情報
+	short			padding;		// 4バイトの境界のためのpadding(?)
+	*/
+};
+```
+リーフの構造は子と平面への参照を持たないことを除いてノードのそれと似ています。追加の要素として`contents`フラグ（前述のブラシLumpを参照）と`cluster`（クラスタの数、下記参照）があります。`contents`フラグはリーフ内のブラシの中身を示すフラグです。`area`と`flags`は16bitの空間を共有していて、下の9bitが`area`、上の7bitが`flags`です。`area`はエリアナンバーを、`flags`はリーフに関するフラグを示します。`firstleafface`と`numleaffaces`はリーフ面の配列へのインデックスで、リーフ内に面がある時にどの面があるかを表します。`firstleafbrush`と`numleafbrushes`も同様にリーフブラシの配列を通してリーフ内にあるブラシへのインデックスを表します。
+
+`ambientLighitng`という要素は24バイトの`CompressedLightCube`構造体で、リーフ内にあるオブジェクトのライティングに関するものです。バージョン17のBSPファイルはdleaf_t構造体がアンビエントライティングのデータを省くように変更されていて、リーフごとのサイズが32バイトになっています。同じ構造体はバージョン20のBSPファイルでも用いられていて、LDRとHDRのためのアンビエントライティングの情報はおそらく新しいLumpであるLump 55とLump56に格納されています。
+
+すべてのリーフは凸多面体で、親ノードの平面により定義されます。リーフは重ならず、マップ内の任意の点はただ1つのリーフの中に属します。固体のブラシで満たされていないリーフはプレイヤーが入ることが可能で、そのようなリーフはクラスタ番号が設定されています。これは可視性の情報と一緒に使用されます（下記）。
+
+マップには通常複数の独立したBSP木が存在します。各木はモデル配列（下記）の要素に対応し、モデル配列の要素には各木の根ノードへの参照があります。最初のBSP木はworldspawnでモデルで、レベル全体のジオメトリです。続くBSP木はマップの各ブラシエンティティのモデルです。
+
+BSP木の作成はマップのコンパイルの第一段階でVBSPプログラムにより行われます。マップの制作者によるHINTブラシやfunc_detailの使用と、すべてのブラシの注意深い配置は、どのようにBSP木が作られマップがリーフに分割されるかに影響を及ぼすことがあります。
+
+
+<h2 id="leaffaceandleafbrush">リーフ面とリーフブラシ</h2>
+
+リーフ面Lump **(Lump 16)** はunsigned short型の配列で、各要素は面の配列へのインデックスです。リーフブラシLump（これもunsigned short型の配列です） **(Lump 17)** も同様のことをブラシに対して行います。これらの最大サイズはどちらも65536個です（MAX_MAP_LEAFFACES、MAX_MAP_LEAFBRUSHES）。
+
+
+<h2 id="textures">テクスチャ</h2>
+
+マップのテクスチャ情報は様々なLumpに分割されています。Texinfo Lumpが最も基本的なもので、面やブラシ側面の配列から参照され、他のテクスチャ関係のLumpを参照します。
+
+
+<h3 id="texinfo">Texinfo</h3>
+
+Texinfo Lump **(Lump 6)** は`texinfo_t`構造体の配列です。
+``` C++
+struct texinfo_t
+{
+	float	textureVecs[2][4];	// [s/t][xyz オフセット]
+	float	lightmapVecs[2][4];	// [s/t][xyz オフセット] - 長さの単位は units of texels/area
+	int	flags;			// miptex フラグ オーバーライド
+	int	texdata;		// テクスチャ名やサイズなどへのポインタ
+}
+```
+各Texinfoのサイズは72バイトです。
+
 
 
 以下翻訳中……  
@@ -1297,3 +1454,8 @@ struct dface_t
 [GoldSrc]: https://developer.valvesoftware.com/wiki/GoldSrc "GoldSrc - Valve Developer Community"
 [Source BSP File Format/Game-Specific]: https://developer.valvesoftware.com/wiki/Source_BSP_File_Format/Game-Specific "Source BSP File Format/Game-Specific - Valve Developer Community"
 [Vector]: https://developer.valvesoftware.com/wiki/Vector "Vector - Valve Developer Community"
+[ブラシ]: https://developer.valvesoftware.com/wiki/Brush "Brush - Valve Developer Community"
+[空間領域構成法（CSG）]: https://ja.wikipedia.org/wiki/Constructive_Solid_Geometry "Constructive Solid Geometry - Wikipedia（日本語）"
+[func_detail]: https://developer.valvesoftware.com/wiki/Func_detail "func_detail - Valve Developer Community"
+[toolsnodraw]: https://developer.valvesoftware.com/wiki/Tool_textures#nodraw "Tool textures - Valve Developer Community"
+[「BSP for dummies」]: http://web.archive.org/web/20050426034532/http://www.planetquake.com/qxx/bsp/ "BSP for Dummies - WebArchive.org"
