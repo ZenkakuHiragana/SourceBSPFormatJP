@@ -26,6 +26,26 @@ Valve Developer Communityにある[Source BSP File Formatのページ]を日本�
 	1. [リーフ面とリーフブラシ](#leaffaceandleafbrush)
 	1. [テクスチャ](#textures)
 		1. [Texinfo](#texinfo)
+		1. [Texdata](#texdata)
+		1. [TexdataStringDataとTexdataStringDataTable](#texstring)
+	1. [Model](#model)
+	1. [可視性](#visiblity)
+	1. [エンティティ](#entity)
+	1. [ゲームLump](#gamelump)
+		[静的Prop](#staticprops)
+		[その他](#othergame)
+	1. [Displacement](#displacement)
+		[DispInfo](#dispinfo)
+		[DispVerts](#dispverts)
+		[DispTris](#disptris)
+	1. [Pakfile](#pakfile)
+	1. [Cubemap](#cubemap)
+	1. [オーバーレイ](#overlay)
+	1. [ライティング](#lighting)
+	1. [アンビエントライティング](#ambientlighting)
+	1. [オクルージョン](#occlusion)
+	1. [Physics](#physics)
+	1. [その他](#other)
 
 
 <h2 id="introduction">前書き</h2>
@@ -426,7 +446,7 @@ Lumpのオフセット（と、それに対応するデータ）は最も近い4
 
 <h3 id="lumptypes">Lumpの種類</h3>
 
-`lump_t`配列が指すデータの種類は、配列内の位置によって定義されます。例えば、配列の最初のLump **(Lump 0)** は常にBSPファイルのエンティティデータです（下記参照）。BSPファイル内の実際のデータの位置は、そのLumpのoffsetとlengthによって定義されるため、ファイル内で特定の順番に並んでいる必要はありません。例えば、エンティティデータはLump配列の最初にあるにも関わらず通常はBSPファイルの最後に格納されます。したがって、lump_tヘッダの配列はLumpデータに関するディレクトリのようなものであり、Lumpデータはファイル内を自由に配置することができます。  
+`lump_t`配列が指すデータの種類は、配列内の位置によって定義されます。例えば、配列の最初のLump **(Lump 0)** は常にBSPファイルのエンティティデータです（下表参照）。BSPファイル内の実際のデータの位置は、そのLumpのoffsetとlengthによって定義されるため、ファイル内で特定の順番に並んでいる必要はありません。例えば、エンティティデータはLump配列の最初にあるにも関わらず通常はBSPファイルの最後に格納されます。したがって、lump_tヘッダの配列はLumpデータに関するディレクトリのようなものであり、Lumpデータはファイル内を自由に配置することができます。  
 
 配列内におけるLumpの順番は以下のように定義されます。  
 
@@ -1207,7 +1227,7 @@ struct dedge_t
 	unsigned short	v[2];	// 頂点インデックス
 };
 ```
-各辺は単なる頂点インデックス（頂点Lumpの配列へのインデックス）の組です。辺は2頂点間の直線として定義されます。通常、辺LumpはSurfedge配列を介して参照されます（下記参照）。
+各辺は単なる頂点インデックス（頂点Lumpの配列へのインデックス）の組です。辺は2頂点間の直線として定義されます。通常、辺LumpはSurfedge配列を介して参照されます（下記）。
 
 頂点と同じように、隣接する面の間で辺を共有することができます。
 
@@ -1370,7 +1390,7 @@ struct dnode_t
 ```
 `planenum`は平面の配列の要素を表します。`children[]`メンバはこのノードが持つ2つの子ノードです。もしこの値が正なら、ノードへのインデックスで、負なら、 *-1-child*はリーフの配列へのインデックスを表します（例えば、-100は99番目のリーフを参照します）。
 
-`mins[]`と`maxs[]`メンバはノードを囲むバウンディングボックスの座標です。`firstface`と`numfaces`はこのノードに含まれているマップの面を表す面の配列へのインデックスです。0の場合は面が含まれていません。`area`の値はこのノードにおけるマップの面積です（下記参照）。マップには最大65536個のノードが存在します（MAX_MAP_NODES）。
+`mins[]`と`maxs[]`メンバはノードを囲むバウンディングボックスの座標です。`firstface`と`numfaces`はこのノードに含まれているマップの面を表す面の配列へのインデックスです。0の場合は面が含まれていません。`area`の値はこのノードにおけるマップのエリアです（下記参照）。マップには最大65536個のノードが存在します（MAX_MAP_NODES）。
 
 リーフ配列は要素が56バイトの長さを持つ配列です。
 ``` C++
@@ -1430,9 +1450,193 @@ struct texinfo_t
 ```
 各Texinfoのサイズは72バイトです。
 
+最初のfloat型配列は、ワールドジオメトリ上にレンダリングされる時のテクスチャの方向とスケーリングを表す2つのベクトルです。 2つのベクトル**s**、**t**は、テクスチャピクセル座標空間における左から右へ、下から上への方向をワールドにマッピングするものです。各ベクトルには、x、y、z成分と、ワールドに対するテクスチャの「シフト」のオフセットがあります。 ベクトルの長さは、各方向へのテクスチャのスケーリングを表します。
+
+テクスチャピクセル（または[テクセル]）の2次元座標（[u, v]）は、次式によって面上の点のワールド座標（x、y、z）にマッピングされる。
+
+<i>u = tv<sub>0,0</sub> * x + tv<sub>0,1</sub> * y + tv<sub>0,2</sub> * z + tv<sub>0,3</sub></i>
+
+<i>v = tv<sub>1,0</sub> * x + tv<sub>1,1</sub> * y + tv<sub>1,2</sub> * z + tv<sub>1,3</sub></i>
+
+（すなわち、その方向へのオフセットと頂点のベクトルとの内積です。ここで、tv<sub>A, B</sub>は<code>textureVecs[A][B]</code>です。）
+
+さらに、（u, v）を計算してからグラフィックスカードに送るテクスチャ座標に変換するには、uとvをテクスチャの幅と高さでそれぞれ割ります。
+
+`lightmapVecs`は、テクスチャのライトマップサンプルをワールドに同様にマッピングします。
+
+`flags`には*bspflags.h*で定義されているビットフラグが含まれます。
+
+名前 | 値 | 備考
+:--- | :--- | :---
+`SURF_LIGHT`	| 0x1    | 値は光の強さを保持する
+`SURF_SKY2D`	| 0x2    | 描画しない、2Dスカイボックスを描画することを示し、3Dスカイボックスは描画しない
+`SURF_SKY`	| 0x4    | 描画しないが、スカイボックスに追加する
+`SURF_WARP`	| 0x8    | 乱流ワープ(?)
+`SURF_TRANS`	| 0x10   | テクスチャは半透明
+`SURF_NOPORTAL`	| 0x20   | この表面にはポータルを置くことができない
+`SURF_TRIGGER`	| 0x40   | Xboxでオクルーダーに不具合が生じるため回避策としてトリガーサーフェスを消すためのもの
+`SURF_NODRAW`	| 0x80   | テクスチャの参照をしないようにするもの
+`SURF_HINT`	| 0x100  | BSPの境界面を作る
+`SURF_SKIP`	| 0x200  | 完全に無視し、閉じてないブラシを可能にする
+`SURF_NOLIGHT`	| 0x400  | ライティングを計算しない
+`SURF_BUMPLIGHT`| 0x800  | バンプマップ付きの表面のために3つのライトマップを計算する
+`SURF_NOSHADOWS`| 0x1000 | 影を落とさない
+`SURF_NODECALS`	| 0x2000 | デカールを受け取らない
+`SURF_NOCHOP`	| 0x4000 | この表面は分割されない
+`SURF_HITBOX`	| 0x8000 | この面はヒットボックスの一部である
+
+フラグは、テクスチャの.vmtファイルの内容から派生しているように見え、そのテクスチャの特殊なプロパティを指定します。
 
 
-以下翻訳中……  
+<h3 id="texdata">Texdata</h3>
+
+最後に、`texdata`はTexdata配列へのインデックスで、実際のテクスチャを指定します。
+
+Texinfoのインデックス（面やブラシ側面から参照される）は-1が与えられることがあります。これはテクスチャ情報がその面に関連付けられていないことを示し、テクスチャのタイプにSKIP、CLIP、もしくはINVISIBLEを指定したブラシ面をコンパイルすると発生します。
+
+Texdata配列 **(Lump 2)** は以下の構造体で構成されています。
+``` C++
+struct dtexdata_t
+{
+	Vector	reflectivity;		// RGB反射率
+	int	nameStringTableID;	// TexdataStringTableへのインデックス
+	int	width, height;		// 元画像
+	int	view_width, view_height;
+};
+```
+`reflectivity`ベクトルは、マテリアルの.vtfファイルから取り出されたテクスチャの反射率のRGB成分に対応します。これは、テクスチャ表面からどのように光が反射するかのラジオシティ（照明）の計算におそらく使用されます。`nameStringTableID`はTexdataStringTableへのインデックスです（下記）。 他のメンバは、テクスチャのソースイメージに関連しています。
+
+
+<h3 id="texstring">TexdataStringDataとTexdataStringTable</h3>
+
+TexdataStringTable **(Lump 44)** はint型の配列で、TexdataStringData **(Lump 43)** へのインデックスです。TexdataStringData Lumpはヌル終端文字列で表されたテクスチャ名を連結したものです。
+
+マップには最大12288個のTexinfoが存在します（MAX_MAP_TEXINFO）。Texdataの制限は最大2048個です（MAX_MAP_TEXDATA）。また、TexdataStringDataのサイズは最大256000バイトです（MAX_MAP_TEXDATA_STRING_DATA）。そして、テクスチャ名は最大128文字までです（TEXTURE_NAME_LENGTH）。
+
+
+<h2 id="model">Model</h2>
+
+ModelとはBSPファイル形式の用語で、しばしば「bmodel」とも呼ばれるブラシと面の集合のことです。Source SDKで「studiomodel」と呼ばれるHammer Editorで使用されるプロップモデルの方と混同しないように注意してください。
+
+Model Lump **(Lump 14)** は24バイトの`dmodel_t`構造体で構成されています。
+``` C++
+struct dmodel_t
+{
+	Vector	mins, maxs;		// バウンディングボックス
+	Vector	origin;			// サウンドやライティング用
+	int	headnode;		// ノード配列へのインデックス
+	int	firstface, numfaces;	// 面の配列へのインデックス
+};
+```
+`mins`と`maxs`はModelのバウンディングボックスを示す点です。`origin`が設定されている場合、Modelの原点座標がその点であることを意味します。`headnode`はこのModelを表すBSP木の根ノードを示すノード配列へのインデックスです。`firstface`と`numfaces`は面の配列へのインデックスで、Modelを構成する面を示します。
+
+この配列にある最初のModel（Model 0）は常に「worldspawn」（エンティティ以外のマップ全体のジオメトリとfunc_detailブラシの集合）です。続くModelはブラシエンティティに関連付けられるもので、エンティティLumpから参照されます。
+
+マップには最大で1024個のModelが存在します（MAX_MAP_MODELS）。これにはworldspawnのModelも含みます。
+
+
+<h2 id="visiblity">可視性</h2>
+
+可視性Lump **(Lump 4)** はこれまでに解説したものとはやや異なった形式のLumpです。これを理解するためには、Source Engineの可視性システムがどのように機能するかについての議論が必要です。
+
+
+<h2 id="entity">エンティティ</h2>
+
+エンティティLump **(Lump 0)** はエンティティのデータをコンパイル前のVMFファイルにあるKeyValueフォーマットに非常によく似た形式で格納するASCIIテキストバッファです。
+
+
+<h2 id="gamelump">ゲームLump</h2>
+
+ゲームLump **(Lump 35)** は、Source Engineを使用したゲーム固有のマップデータに使用されるように意図されているため、以前に定義されたフォーマットを変更することなくファイルフォーマットを拡張することができます。
+
+
+<h3 id="staticprops>静的Prop</h3>
+
+興味深いのは、「scrp」（ASCII表記、10進数で1936749168）というGamelump IDを用いるprop_staticエンティティの格納に使われるGamelumpです。
+
+
+<h3 id="othergame">その他</h3>
+
+Source BSPファイルで使われる他のゲームLumpは、Detail prop gamelump（dprp）、Detail prop lighting gamelump（LDRはdplt、HDRはdplh）です。
+
+
+<h2 id="displacement">Displacement</h2>
+
+DisplacementサーフェスはBSPファイルの中で最も複雑な部分であり、ここで説明されるのはそのフォーマットの一部のみです。
+
+
+<h3 id="dispinfo">DispInfo</h3>
+
+``` C++
+struct ddispinfo_t
+{
+	Vector			startPosition;		// 方向付けのために用いられる開始位置
+	int			DispVertStart;		// LUMP_DISP_VERTSへのインデックス
+	int			DispTriStart;		// LUMP_DISP_TRISへのインデックス
+	int			power;			// サーフェスのサイズを示す（2^power - 1）
+	int			minTess;		// 最小のテセレーション(?)
+	float			smoothingAngle;		// ライティング スムージング角度
+	int			contents;		// サーフェス コンテンツ
+	unsigned short		MapFace;		// このDisplacementがどの面から得られたかを示すインデックス
+	int			LightmapAlphaStart;	// ddisplightmapalphaへのインデックス
+	int			LightmapSamplePositionStart;	// LUMP_DISP_LIGHTMAP_SAMPLE_POSITIONSへのインデックス
+	CDispNeighbor		EdgeNeighbors[4];	// NEIGHBOREDGE_ の定義によりインデックスされる
+	CDispCornerNeighbors	CornerNeighbors[4];	// CORNER_ の定義によりインデックスされる
+	unsigned int		AllowedVerts[10];	// アクティブな頂点(?)
+};
+```
+この構造体は176バイトの長さを持ちます。
+
+
+<h3 id="dispverts">DispVerts</h3>
+
+DispVerts Lump **(Lump 33)** にはDisplacementの頂点データが含まれています。
+
+
+<h3 id="disptris">DispTris</h3>
+
+DispTris Lump **(Lump 48)** にはDisplacementのメッシュの特定の三角形のプロパティに関する「三角形タグ」もしくはフラグが含まれています。
+
+
+<h2 id="pakfile">Pakfile</h2>
+
+Pakfile Lump **(Lump 40)** はBSPファイルに埋め込まれた複数のファイルを格納できる特別なLumpです。
+
+
+<h2 id="cubemap">Cubemap</h2>
+
+Cubemap Lump **(Lump 42)** は16バイトの`dcubemapsample_t`構造体の配列です。
+
+
+<h2 id="overlay">オーバーレイ</h2>
+
+単純なデカール（infodecalエンティティ）とは異なり、info_overlayはエンティティLumpから削除されて、オーバーレイLump **(Lump 45)** に分けて保存されます。
+
+
+<h2 id="lighting">ライティング</h2>
+
+ライティングLump **(Lump 8)** はマップの面の静的ライトマップサンプルを格納するために使用されます。
+
+
+<h2 id="ambientlighting">アンビエントライティング</h2>
+
+アンビエントライティングLump **(Lump 55とLump 56)** は、BSPバージョン20以降に存在します。
+
+
+<h2 id="occlusion">オクルージョン</h2>
+
+オクルージョンLump **(Lump 9)** にはポリゴンジオメトリとfunc_occluderエンティティで使用されるいくつかのフラグが含まれています。
+
+
+<h2 id="physics">Physics</h2>
+
+Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含まれています。
+
+
+<h2 id="other">その他</h2>
+
+**To do:** これらの情報の一部は推測に基づくものである可能性があるため、更なる調査が必要です。
+
 
 [Source BSP File Formatのページ]: https://developer.valvesoftware.com/wiki/Source_BSP_File_Format "Source BSP File Format - Valve Developer Community"
 [Rof]: https://developer.valvesoftware.com/wiki/User:Rof "User:Rof - Valve Developer Community"
@@ -1459,3 +1663,5 @@ struct texinfo_t
 [func_detail]: https://developer.valvesoftware.com/wiki/Func_detail "func_detail - Valve Developer Community"
 [toolsnodraw]: https://developer.valvesoftware.com/wiki/Tool_textures#nodraw "Tool textures - Valve Developer Community"
 [「BSP for dummies」]: http://web.archive.org/web/20050426034532/http://www.planetquake.com/qxx/bsp/ "BSP for Dummies - WebArchive.org"
+[テクセル]: https://developer.valvesoftware.com/wiki/Texel "Texel - Valve Developer Community"
+[u, v]: https://developer.valvesoftware.com/wiki/UV_map "UV map - Valve Developer Community"
