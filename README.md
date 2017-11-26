@@ -32,12 +32,12 @@ Valve Developer Communityにある[Source BSP File Formatのページ]を日本�
 	1. [可視性](#visiblity)
 	1. [エンティティ](#entity)
 	1. [ゲームLump](#gamelump)
-		[静的Prop](#staticprops)
-		[その他](#othergame)
+		1. [静的Prop](#staticprops)
+		1. [その他](#othergame)
 	1. [Displacement](#displacement)
-		[DispInfo](#dispinfo)
-		[DispVerts](#dispverts)
-		[DispTris](#disptris)
+		1. [DispInfo](#dispinfo)
+		1. [DispVerts](#dispverts)
+		1. [DispTris](#disptris)
 	1. [Pakfile](#pakfile)
 	1. [Cubemap](#cubemap)
 	1. [オーバーレイ](#overlay)
@@ -1550,7 +1550,7 @@ struct dmodel_t
 ゲームLump **(Lump 35)** は、Source Engineを使用したゲーム固有のマップデータに使用されるように意図されているため、以前に定義されたフォーマットを変更することなくファイルフォーマットを拡張することができます。
 
 
-<h3 id="staticprops>静的Prop</h3>
+<h3 id="staticprops">静的Prop</h3>
 
 興味深いのは、「scrp」（ASCII表記、10進数で1936749168）というGamelump IDを用いるprop_staticエンティティの格納に使われるGamelumpです。
 
