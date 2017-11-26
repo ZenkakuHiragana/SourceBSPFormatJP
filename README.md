@@ -1672,4 +1672,4 @@ Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含�
 [KeyValue]: https://developer.valvesoftware.com/wiki/Keyvalue "Keyvalue - Valve Developer Community"
 [prop_static]: https://developer.valvesoftware.com/wiki/Prop_static "prop_static - Valve Developer Community"
 
-[func_occluder]: https://developer.valvesoftware.com/wiki/Func_occluder "func_occluder - Valve Develoepr Community"
+[func_occluder]: https://developer.valvesoftware.com/wiki/Func_occluder "func_occluder - Valve Developer Community"
