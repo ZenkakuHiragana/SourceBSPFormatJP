@@ -1696,7 +1696,7 @@ Propの座標は`Origin`メンバによって、向き（ピッチ ロール ヨ
 
 <h3 id="othergame">その他</h3>
 
-Source BSPファイルで使われる他のGamelumpは、Detail prop gamelump（dprp）、Detail prop lighting gamelump（LDRはdplt、HDRはdplh）です。これらはDisplacementに特定のテクスチャを指定した時に自動的に現れる[prop_detail]エンティティ（草むらなど）に使用されます。
+Source BSPファイルで使われる他のGamelumpは、Detail prop gamelump（dprp）、Detail prop lighting gamelump（LDRはdplt、HDRはdplh）です。これらはDisplacementに特定のテクスチャを指定した場合に自動的に現れる[prop_detail]エンティティ（草むらなど）に使用されます。
 
 Gamelumpのサイズには特に制限はないようです。
 
