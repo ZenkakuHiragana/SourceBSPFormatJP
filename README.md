@@ -31,8 +31,8 @@ Valve Developer Communityにある[Source BSP File Formatのページ]を日本�
 	1. [Model](#model)
 	1. [可視性](#visiblity)
 	1. [エンティティ](#entity)
-	1. [ゲームLump](#gamelump)
-		1. [静的Prop](#staticprops)
+	1. [Gamelump](#gamelump)
+		1. [Static Prop](#staticprops)
 		1. [その他](#othergame)
 	1. [Displacement](#displacement)
 		1. [DispInfo](#dispinfo)
@@ -1168,7 +1168,7 @@ struct lzma_header_t
 // リトルエンディアン "LZMA"
 #define LZMA_ID	(('A'<<24)|('M'<<16)|('Z'<<8)|('L'))
 ```
-圧縮に関して、2つのスペシャルケースがあります。`LUMP_PAKFILE`は決して圧縮されず、`LUMP_GAME_LUMP`の各ゲームLumpは個別に圧縮されます。圧縮されたゲームLumpのサイズは、現在のゲームLumpのオフセットを次のもののオフセットから引くことで決めることができます。このため、最後のゲームLumpは常にオフセットを含む空のダミーです。
+圧縮に関して、2つのスペシャルケースがあります。`LUMP_PAKFILE`は決して圧縮されず、`LUMP_GAME_LUMP`の各Gamelumpは個別に圧縮されます。圧縮されたGamelumpのサイズは、現在のGamelumpのオフセットを次のもののオフセットから引くことで決めることができます。このため、最後のGamelumpは常にオフセットを含む空のダミーです。
 <br><br>
 
 <h1 id="lumpheader">Lump</h1>
@@ -1206,7 +1206,7 @@ float型は4バイトの長さを持つため、1つの平面につきサイズ�
 
 この構造体の`type`メンバは座標軸に垂直な平面を示すフラグが含まれているようですが、通常は使用されません。
 
-マップには最大で65536枚の平面が存在します（MAX_MAP_PLANES）。
+マップには最大で65536枚の平面が存在します（`MAX_MAP_PLANES`）。
 
 
 <h2 id="vertex">頂点</h2>
@@ -1215,7 +1215,7 @@ float型は4バイトの長さを持つため、1つの平面につきサイズ�
 
 2つの面で頂点が正確に一致する場合、頂点はそれらの面で共有されることに注意してください。
 
-マップには最大で65536個の頂点が存在します（MAX_MAP_VERTS）。
+マップには最大で65536個の頂点が存在します（`MAX_MAP_VERTS`）。
 
 
 <h2 id="edge">辺</h2>
@@ -1231,7 +1231,7 @@ struct dedge_t
 
 頂点と同じように、隣接する面の間で辺を共有することができます。
 
-マップには最大で256000本の辺が存在します（MAX_MAP_EDGES）。
+マップには最大で256000本の辺が存在します（`MAX_MAP_EDGES`）。
 
 
 <h2 id="surfedge">Surfedge</h2>
@@ -1240,7 +1240,7 @@ struct dedge_t
 
 この方法により、Surfedge配列は辺を特定の方向に向かうように参照できます（辺を方向づけする理由については、以下の面の項目を参照してください）。
 
-1つのマップに付き512000個のSurfedgeまでという制限があります（MAX_MAP_SURFEDGES）。ただし、Surfedgeの数は必ずしもマップの辺の数と同じではありません。
+1つのマップに付き512000個のSurfedgeまでという制限があります（`MAX_MAP_SURFEDGES`）。ただし、Surfedgeの数は必ずしもマップの辺の数と同じではありません。
 
 
 <h2 id="faceandoriginalface">面と元の面</h2>
@@ -1282,7 +1282,7 @@ struct dface_t
 
 `origFace`はこの面の分割される元となった「元の面（Original Face）」へのインデックスです。`numPrims`と`firstPrimID`は「非ポリゴンプリミティブ」（以下参照）の描画に関連しています。`dface_t`構造体の他のメンバは、面のライティング情報を参照するために使用されます（下記のライティングLumpを参照）。
 
-面の数は65536枚に制限されています（MAX_MAP_FACES）。
+面の数は65536枚に制限されています（`MAX_MAP_FACES`）。
 
 元の面Lump **(Lump 27)** は面Lumpと同じ構造を持ちますが、BSP分割処理が行われる前の面の配列が含まれています。したがって、これらの面は面の配列よりもマップのコンパイル前に存在する元のブラシ面に近く、また面の数はより少ないです。元の面の`origFace`はすべて0です。また、元の面の配列の要素数も最大で65536枚です。
 
@@ -1344,7 +1344,7 @@ struct dbrush_t
 
 これらのフラグの一部は、以前のゲームエンジンから引き継がれているように見え、Sourceのマップでは使われていないものもあります。また、これらのフラグはマップのリーフの中身について説明するためにも使われます（下記参照）。`CONTENTS_DETAIL`フラグはマップのコンパイル前に[func_detail]エンティティであったブラシをマークするために使われます。
 
-ブラシの配列の要素数は8192個に制限されています（MAX_MAP_BRUSHES）。
+ブラシの配列の要素数は8192個に制限されています（`MAX_MAP_BRUSHES`）。
 
 ブラシ側面Lump **(Lump 19)** は8バイトの構造体の配列です。
 ``` C++
@@ -1360,7 +1360,7 @@ struct dbrushside_t
 
 面の配列とは異なり、ワールドの外を向いたブラシ側面はカリング（削除）されません。その代わり、コンパイル処理中にテクスチャ情報が`tools/[toolsnodraw]`に変更されます。ここで注意すべきことは、ブラシをレンダリングするのに使われる対応する面の配列の要素と、ブラシとブラシ側面とを関連付ける直接的な方法が存在しないことです。ブラシ側面はすべてのプレイヤーとワールドブラシとの衝突判定を計算するためにエンジンによって使われます（VPhysicsオブジェクトは代わりにLump 29が使われます）。
 
-ブラシ側面は最大で65536枚です（MAX_MAP_BRUSHSIDES）。また、ブラシごとのブラシ側面の最大数は128枚です（MAX_BRUSH_SIDES）。
+ブラシ側面は最大で65536枚です（`MAX_MAP_BRUSHSIDES`）。また、ブラシごとのブラシ側面の最大数は128枚です（`MAX_BRUSH_SIDES`）。
 
 
 <h2 id="nodeandleaf">ノードとリーフ</h2>
@@ -1390,7 +1390,7 @@ struct dnode_t
 ```
 `planenum`は平面の配列の要素を表します。`children[]`メンバはこのノードが持つ2つの子ノードです。もしこの値が正なら、ノードへのインデックスで、負なら、 *-1-child*はリーフの配列へのインデックスを表します（例えば、-100は99番目のリーフを参照します）。
 
-`mins[]`と`maxs[]`メンバはノードを囲むバウンディングボックスの座標です。`firstface`と`numfaces`はこのノードに含まれているマップの面を表す面の配列へのインデックスです。0の場合は面が含まれていません。`area`の値はこのノードにおけるマップのエリアです（下記参照）。マップには最大65536個のノードが存在します（MAX_MAP_NODES）。
+`mins[]`と`maxs[]`メンバはノードを囲むバウンディングボックスの座標です。`firstface`と`numfaces`はこのノードに含まれているマップの面を表す面の配列へのインデックスです。0の場合は面が含まれていません。`area`の値はこのノードにおけるマップのエリアです（下記参照）。マップには最大65536個のノードが存在します（`MAX_MAP_NODES`）。
 
 リーフ配列は要素が56バイトの長さを持つ配列です。
 ``` C++
@@ -1428,7 +1428,7 @@ BSP木の作成はマップのコンパイルの第一段階でVBSPプログラ�
 
 <h2 id="leaffaceandleafbrush">リーフ面とリーフブラシ</h2>
 
-リーフ面Lump **(Lump 16)** はunsigned short型の配列で、各要素は面の配列へのインデックスです。リーフブラシLump（これもunsigned short型の配列です） **(Lump 17)** も同様のことをブラシに対して行います。これらの最大サイズはどちらも65536個です（MAX_MAP_LEAFFACES、MAX_MAP_LEAFBRUSHES）。
+リーフ面Lump **(Lump 16)** はunsigned short型の配列で、各要素は面の配列へのインデックスです。リーフブラシLump（これもunsigned short型の配列です） **(Lump 17)** も同様のことをブラシに対して行います。これらの最大サイズはどちらも65536個です（`MAX_MAP_LEAFFACES`、`MAX_MAP_LEAFBRUSHES`）。
 
 
 <h2 id="textures">テクスチャ</h2>
@@ -1511,7 +1511,7 @@ struct dtexdata_t
 
 TexdataStringTable **(Lump 44)** はint型の配列で、TexdataStringData **(Lump 43)** へのインデックスです。TexdataStringData Lumpはヌル終端文字列で表されたテクスチャ名を連結したものです。
 
-マップには最大12288個のTexinfoが存在します（MAX_MAP_TEXINFO）。Texdataの制限は最大2048個です（MAX_MAP_TEXDATA）。また、TexdataStringDataのサイズは最大256000バイトです（MAX_MAP_TEXDATA_STRING_DATA）。そして、テクスチャ名は最大128文字までです（TEXTURE_NAME_LENGTH）。
+マップには最大12288個のTexinfoが存在します（`MAX_MAP_TEXINFO`）。Texdataの制限は最大2048個です（`MAX_MAP_TEXDATA`）。また、TexdataStringDataのサイズは最大256000バイトです（`MAX_MAP_TEXDATA_STRING_DATA`）。そして、テクスチャ名は最大128文字までです（`TEXTURE_NAME_LENGTH`）。
 
 
 <h2 id="model">Model</h2>
@@ -1532,39 +1532,178 @@ struct dmodel_t
 
 この配列にある最初のModel（Model 0）は常に「worldspawn」（エンティティ以外のマップ全体のジオメトリとfunc_detailブラシの集合）です。続くModelはブラシエンティティに関連付けられるもので、エンティティLumpから参照されます。
 
-マップには最大で1024個のModelが存在します（MAX_MAP_MODELS）。これにはworldspawnのModelも含みます。
+マップには最大で1024個のModelが存在します（`MAX_MAP_MODELS`）。これにはworldspawnのModelも含みます。
 
 
 <h2 id="visiblity">可視性</h2>
 
 可視性Lump **(Lump 4)** はこれまでに解説したものとはやや異なった形式のLumpです。これを理解するためには、Source Engineの可視性システムがどのように機能するかについての議論が必要です。
 
+[ノードとリーフ](#nodeandleaf)の節で述べたように、マップ内の任意の点はリーフと呼ばれる凸ボリュームに分類されます。マップ内の（外側の空間に触れていない）ブラシで覆われていないリーフは、プレイヤーの視点を含む可能性があります。このようなプレイヤーの入れるリーフ（*[visleaf]* とも呼ばれる）にはクラスタ番号が割り当てられます。Source BSPファイルでは1つの進入可能なリーフには1つのクラスタ番号が対応しています。
+
+（用語がここでは少し分かりにくくなっています。「Quake 2 BSP File Format」の記事によると、Q2 Engineでは各クラスタに複数の隣接するリーフが存在する可能性があります。したがって、クラスタはリーフの集まりとみなせるためクラスタという名前で呼ばれています。この状況は、Sourceのマップをコンパイルする時にも発生することがあります。しかしながら、[VVIS]のコンパイル処理が終了した後、これらの隣接するリーフ（と、それらの親ノード）は通常1つのリーフに統合されます。古いSourceのマップ（[Counter-Strike: Global Offensive]より前）では、クラスタごとにリーフは1つしかないようですが、いくつかのCS:GOのマップでは最終的にコンパイルされたBSP内で、複数のリーフが同じクラスタに属することがあります。これは、ほとんどのCS:GOマップの3Dスカイボックスで特に起こると思われ、de_cbbleやde_nukeなどの最近改装されたマップの主なプレイ可能領域から見ることができます。）
+
+各クラスタは、プレイヤーが存在する可能性を持つマップ内のボリュームです。マップを素早くレンダリングするために、ゲームエンジンは現在のクラスタから見えるクラスタについてのみジオメトリを描画します。プレイヤーのいるクラスタから完全に見えないクラスタを描く必要はありません。クラスタ間の可視性の計算はVVISコンパイルツールの役目で、その結果得られるデータは可視性Lumpに格納されます。
+
+エンジンがあるクラスタが見えると認識すると、リーフデータはそのクラスタに存在するすべての面を参照し、結果としてそのクラスタの内容をレンダリングすることができます。
+
+データはビットベクトルの配列として格納されます。各クラスタについて、他のどのクラスタが見えるかのリストはn番目のビットがn番目のクラスタに対応するビット配列（1なら見える、0なら見えない）として配列に格納されます。これはクラスタの[Potentially Visiblity Set（PVS）]として知られています。このデータはサイズが大きいため、各ビットベクトルは0ビットのランレングス符号化グループによって圧縮されます。
+
+また、各クラスタに対して[Potentially Audible Set（PAS）]の配列も作成されます。これはあるクラスタで発生する音をどのクラスタで聞くことができるかを表します。PASは、現在のクラスタのPVS内にあるすべてのクラスタのPVSビットを統合することで作成されるようです。
+
+可視性Lumpは以下のように定義されます。
+``` C++
+struct dvis_t
+{
+	int	numclusters;
+	int	byteofs[numclusters][2]
+};
+```
+最初のint値はマップ内の総クラスタ数です。その後にはint型配列が続き、この配列はLumpの先頭から各クラスタのPVSビット配列の開始点とPAS配列の開始点へのオフセットです。配列の後には圧縮されたビットベクトルがあります。
+
+ランレングス圧縮の復号化は次のように動作します。特定のクラスタのPVSを見つけるためには、`byteofs[]`配列内のオフセットによって指定されたバイトから開始します。PVSバッファの現在のバイトが0の場合、次のバイトの値に8をかけた値がスキップするクラスタの数で、これはそのクラスタからは見えないクラスタです。現在のバイトが0でない場合は、設定されているビットがそのクラスタから見えるクラスタに対応します。これがマップ内の総クラスタ数の分だけ続きます。
+
+ビットベクトルを展開するCコードの例は「Quake 2 BSP File Format」のドキュメントにあります。
+
+可視性Lumpの最大サイズは0x1000000バイトです（`MAX_MAP_VISIBLITY`）。すなわち、16MBです。
+
 
 <h2 id="entity">エンティティ</h2>
 
-	*関連:* [Patching levels with lump files]
+**関連:** [Patching levels with lump files]
 
-エンティティLump **(Lump 0)** はエンティティのデータをコンパイル前の[VMF]ファイルにある[KeyValue]フォーマットに非常によく似た形式で格納するASCIIテキストバッファです。
+エンティティLump **(Lump 0)** はエンティティのデータをコンパイル前の[VMF]ファイルにある[KeyValue]フォーマットに非常によく似た形式で格納するASCIIテキストバッファです。一般的な形式は次の通りです。
+``` C++
+{
+	"world_maxs" "480 480 480"
+	"world_mins" "-480 -480 -224"
+	"maxpropscreenwidth" "-1"
+	"skyname" "sky_wasteland02"
+	"classname" "worldspawn"
+}
+{
+	"origin" "-413.793 -384 -192"
+	"angles" "0 0 0"
+	"classname" "info_player_start"
+}
+{
+	"model" "*1"
+	"targetname" "secret_1"
+	"origin" "424 -1536 1800"
+	"Solidity" "1"
+	"StartDisabled" "0"
+	"InputFilter" "0"
+	"disablereceiveshadows" "0"
+	"disableshadows" "0"
+	"rendermode" "0"
+	"renderfx" "0"
+	"rendercolor" "255 255 255"
+	"renderamt" "255"
+	"classname" "func_brush"
+}
+```
+エンティティは中括弧（`[`と`]`）に囲まれて定義され、引用符で囲まれたキーと値のペアを各行にリストします。最初のエンティティは常に[worldspawn]です。`classname`プロパティはエンティティの種類を指定し、エンティティの名前がHammerで定義されていれば[`targetname`]がその名前を指します。`model`プロパティはアスタリスク（\*）で始まる場合は少し特殊で、続く数字は[ブラシエンティティ]のModelに対応するModel配列（上記）へのインデックスです。それ以外の場合、`model`プロパティはコンパイルされた[モデル]の名前を表します。他のキーと値のペアは、Hammerで設定されたエンティティのプロパティに対応します。
+
+![noteicon] **注釈:**    エンティティのうちのいくつか（func_detail、env_cubemap、info_overlay、prop_staticを含む）は[内部的なもの]で、通常は[ワールド]に吸収されるためコンパイル処理中にエンティティLumpから削除されます。
+
+Source Engineのバージョンに応じて、エンティティLumpには4096（Source 2004）から16384（Alien Swarm）個のエンティティを含むことができます（`MAX_MAP_ENTITIES`）。これらの制限は、エンジンの実際の[エンティティの制限]とは無関係です。各キーは最大32文字まで（`MAX_KEY`）、値は最大1024文字までです（`MAX_VALUE`）。
 
 
-<h2 id="gamelump">ゲームLump</h2>
+<h2 id="gamelump">Gamelump</h2>
 
-ゲームLump **(Lump 35)** は、Source Engineを使用したゲーム固有のマップデータに使用されるように意図されているため、以前に定義されたフォーマットを変更することなくファイルフォーマットを拡張することができます。
+Gamelump **(Lump 35)** は、Source Engineを使用したゲーム固有のマップデータに使用されるように意図されているため、以前に定義されたフォーマットを変更することなくファイルフォーマットを拡張することができます。GamelumpはGamelumpヘッダから始まります。
+``` C++
+struct dgamelumpheader_t
+{
+	int lumpCount;	// Gamelumpの数
+	dgamelump_t gamelump[lumpCount];
+};
+```
+Gamelumpディレクトリ配列は次のように定義されます。
+``` C++
+struct dgamelump_t
+{
+	int		id;		// Gamelump ID
+	unsigned short	flags;		// フラグ
+	unsigned short	version;	// Gamelumpバージョン
+	int		fileofs;	// このGamelumpへのオフセット
+	int		filelen;	// 長さ
+};
+```
+Gamelumpはどのデータが格納されているかを定義する4バイトの`id`メンバによって識別され、データのバイト位置と長さは`fileofs`と`filelen`で与えられます。`fileofs`はBSPファイル先頭からの相対的なオフセットであり、Gamelumpのオフセットとは関係ないことに注意してください。ただし、Portal 2のコンソール版に関しては例外で、そこでは`fileofs`はGamelumpからの相対的なオフセットです。
 
 
-<h3 id="staticprops">静的Prop</h3>
+<h3 id="staticprops">Static Prop</h3>
 
-興味深いのは、「scrp」（ASCII表記、10進数で1936749168）というGamelump IDを用いる[prop_static]エンティティの格納に使われるGamelumpです。
+興味深いのは、「scrp」（ASCII表記、10進数で1936749168）というGamelump IDを用いる[prop_static]エンティティの格納に使われるGamelumpです。他のほとんどのエンティティとは異なり、Static PropはエンティティLumpに格納されません。Sourceで用いるGamelumpの形式は*public/gamebspfile.h*で定義されています。
+
+Static Prop Gamelumpの最初の要素は辞書で、int値のカウントに続いてマップで使用されるモデル（Prop）の名前のリストがあります。
+``` C++
+struct StaticPropDictLump_t
+{
+	int	dictEntries;
+	char	name[dictEntries];	// モデル名
+};
+```
+`name`の要素はそれぞれ128文字で、ヌル文字でこの文字数まで埋められています。
+
+辞書に続くのはリーフ配列です。
+``` C++
+struct StaticPropLeafLump_t
+{
+	int leafEntries;
+	unsigned short	leaf[leafEntries];
+};
+```
+おそらくこの配列は各Propが配置されているリーフを見つけるためにリーフLumpへインデックスをつけるために使用されます。また、prop_staticはいくつかのリーフにまたがって配置される場合があります。
+
+次に、`StaticPropLump_t`構造体の数を示すint値に続いてその構造体が多く続きます。
+``` C++
+struct StaticPropLump_t
+{
+	// v4
+	Vector		Origin;		 // 原点座標
+	QAngle		Angles;		 // 方向（ピッチ ロール ヨー）
+	unsigned short	PropType;	 // モデル名の辞書へのインデックス
+	unsigned short	FirstLeaf;	 // リーフ配列へのインデックス
+	unsigned short	LeafCount;
+	unsigned char	Solid;		 // solidity type
+	unsigned char	Flags;
+	int		Skin;		 // モデルスキン番号
+	float		FadeMinDist;
+	float		FadeMaxDist;
+	Vector		LightingOrigin;  // ライティング用
+	// v5から
+	float		ForcedFadeScale; // フェード距離スケール
+	// v6とv7のみ
+	unsigned short  MinDXLevel;      // 見えるための最低DirectXバージョン
+	unsigned short  MaxDXLevel;      // 見えるための最大DirectXバージョン
+        // v8から
+	unsigned char   MinCPULevel;
+	unsigned char   MaxCPULevel;
+	unsigned char   MinGPULevel;
+	unsigned char   MaxGPULevel;
+        // v7から
+        color32         DiffuseModulation; // インスタンスごとの、色とアルファのモジュレーション
+        // v10から
+        float           unknown; 
+        // v9から
+        bool            DisableX360;     // trueならXbox360で表示しない
+};
+```
+Propの座標は`Origin`メンバによって、向き（ピッチ ロール ヨー）は3つのfloat型ベクトルである`Angles`で与えられます。`PropType`は上で与えられたPropモデル名の辞書へのインデックスです。他の要素はマップのBSP構造におけるPropの位置、ライティング、Hammerで設定された他のエンティティプロパティに対応します。Gamelumpの指定されたバージョン（`dgamelump_t.version`を参照）が十分に高い場合は、さらに要素が存在します（`ForcedFadeScale`など）。バージョン4と5のStatic Prop GamelumpはHL2の公式マップで使用されています。TF2からはバージョン6が現れました。Left 4 Deadのマップの一部ではバージョン7が使用され、[Zeno Clash]のマップでは変更が加えられたバージョン7が使用されています。バージョン8は主に[Left 4 Dead]で使用され、バージョン9は[Left 4 Dead 2]で使用されます。Tactical Interventionでは新しいバージョンであるバージョン10が現れます。
 
 
 <h3 id="othergame">その他</h3>
 
-Source BSPファイルで使われる他のゲームLumpは、Detail prop gamelump（dprp）、Detail prop lighting gamelump（LDRはdplt、HDRはdplh）です。
+Source BSPファイルで使われる他のGamelumpは、Detail prop gamelump（dprp）、Detail prop lighting gamelump（LDRはdplt、HDRはdplh）です。これらはDisplacementに特定のテクスチャを指定した時に自動的に現れる[prop_detail]エンティティ（草むらなど）に使用されます。
+
+Gamelumpのサイズには特に制限はないようです。
 
 
 <h2 id="displacement">Displacement</h2>
 
-DisplacementサーフェスはBSPファイルの中で最も複雑な部分であり、ここで説明されるのはそのフォーマットの一部のみです。
+DisplacementサーフェスはBSPファイルの中で最も複雑な部分であり、ここで説明されるのはそのフォーマットの一部のみです。DisplacementのデータはいくつかのデータLumpに分割されていますが、それらの基本的な参照はDispInfo Lump **(Lump 26)** によるものです。DispInfoは面、元の面、ブラシ側面の配列から参照されます。
 
 
 <h3 id="dispinfo">DispInfo</h3>
@@ -1655,7 +1794,6 @@ Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含�
 [Steam Game Cache File（GCF）]: https://developer.valvesoftware.com/wiki/Game_Cache_File "GCF - Valve Developer Community"
 [GCFScape]: https://developer.valvesoftware.com/wiki/GCFScape "GCFScape - Valve Developer Community"
 [VPK]: https://developer.valvesoftware.com/wiki/VPK "VPK - Valve Developer Community"
-
 [Alien Swarm Icon]: https://developer.valvesoftware.com/w/images/c/c9/AS-16px.png "Alien Swarm Icon"
 [GoldSrc]: https://developer.valvesoftware.com/wiki/GoldSrc "GoldSrc - Valve Developer Community"
 [Source BSP File Format/Game-Specific]: https://developer.valvesoftware.com/wiki/Source_BSP_File_Format/Game-Specific "Source BSP File Format/Game-Specific - Valve Developer Community"
@@ -1667,9 +1805,29 @@ Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含�
 [「BSP for dummies」]: http://web.archive.org/web/20050426034532/http://www.planetquake.com/qxx/bsp/ "BSP for Dummies - WebArchive.org"
 [テクセル]: https://developer.valvesoftware.com/wiki/Texel "Texel - Valve Developer Community"
 [u, v]: https://developer.valvesoftware.com/wiki/UV_map "UV map - Valve Developer Community"
-
+[visleaf]: https://developer.valvesoftware.com/wiki/Visleaves "Visleaves - Valve Developer Community"
+[VVIS]: https://developer.valvesoftware.com/wiki/VVIS "VVIS - Valve Developer Community"
+[Counter-Strike: Global Offensive]: https://developer.valvesoftware.com/wiki/Counter-Strike:_Global_Offensive "Counter-Strike: Global Offensive - Valve Developer Community"
+[Potentially Visiblity Set（PVS）]: https://developer.valvesoftware.com/wiki/PVS "PVS - Valve Developer Community"
+[Potentially Audible Set（PAS）]: https://developer.valvesoftware.com/wiki/PAS "PAS - Valve Developer Community"
 [Patching levels with lump files]: https://developer.valvesoftware.com/wiki/Patching_levels_with_lump_files "Patching levels with lump files - Valve Developer Community"
 [KeyValue]: https://developer.valvesoftware.com/wiki/Keyvalue "Keyvalue - Valve Developer Community"
+[worldspawn]: https://developer.valvesoftware.com/wiki/Worldspawn "worldspawn - Valve Developer Community"
+[`targetname`]: https://developer.valvesoftware.com/wiki/Targetname "targetname - Valve Develoepr Community"
+[ブラシエンティティ]: https://developer.valvesoftware.com/wiki/Brush_entity "Brush entity - Valve Developer Community"
+[モデル]: https://developer.valvesoftware.com/wiki/Model "Model - Valve Developer Community"
+[noteicon]: https://developer.valvesoftware.com/w/images/c/cc/Note.png "Note Icon"
+[内部的なもの]: https://developer.valvesoftware.com/wiki/Internal_entity "Internal entity - Valve Developer Community"
+[ワールド]: https://developer.valvesoftware.com/wiki/The_world "The world - Valve Developer Community"
+[エンティティの制限]: https://developer.valvesoftware.com/wiki/Entity_limit "Entity limit - Valve Developer Community"
 [prop_static]: https://developer.valvesoftware.com/wiki/Prop_static "prop_static - Valve Developer Community"
-
+[Zeno Clash]: https://developer.valvesoftware.com/wiki/Zeno_Clash "Zeno Clash - Valve Developer Community"
+[Left 4 Dead]: https://developer.valvesoftware.com/wiki/Left_4_Dead "Left 4 Dead - Valve Developer Community"
+[Left 4 Dead 2]: https://developer.valvesoftware.com/wiki/Left_4_Dead_2 "Left 4 Dead 2 - Valve Developer Community"
+[prop_detail]: https://developer.valvesoftware.com/wiki/Prop_detail "prop_detail - Valve Developer Community"
+[buildcubemaps]: https://developer.valvesoftware.com/wiki/Cubemaps#Building "Cubemap - Valve Developer Community"
+[BSPZIP]: https://developer.valvesoftware.com/wiki/BSPZIP "BSPZIP - Valve Developer Community"
+[Pakrat]: https://developer.valvesoftware.com/wiki/Pakrat "Pakrat - Valve Developer Community"
+[アンビエントライティング]: https://developer.valvesoftware.com/wiki/Ambient_light "Ambient light - Valve Developer Community"
+[VRAD]: https://developer.valvesoftware.com/wiki/VRAD "VRAD - Valve Developer Community"
 [func_occluder]: https://developer.valvesoftware.com/wiki/Func_occluder "func_occluder - Valve Developer Community"
