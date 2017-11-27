@@ -1813,7 +1813,7 @@ Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含�
 [Patching levels with lump files]: https://developer.valvesoftware.com/wiki/Patching_levels_with_lump_files "Patching levels with lump files - Valve Developer Community"
 [KeyValue]: https://developer.valvesoftware.com/wiki/Keyvalue "Keyvalue - Valve Developer Community"
 [worldspawn]: https://developer.valvesoftware.com/wiki/Worldspawn "worldspawn - Valve Developer Community"
-[`targetname`]: https://developer.valvesoftware.com/wiki/Targetname "targetname - Valve Develoepr Community"
+[`targetname`]: https://developer.valvesoftware.com/wiki/Targetname "targetname - Valve Developer Community"
 [ブラシエンティティ]: https://developer.valvesoftware.com/wiki/Brush_entity "Brush entity - Valve Developer Community"
 [モデル]: https://developer.valvesoftware.com/wiki/Model "Model - Valve Developer Community"
 [noteicon]: https://developer.valvesoftware.com/w/images/c/cc/Note.png "Note Icon"
