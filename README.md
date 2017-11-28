@@ -1972,7 +1972,7 @@ Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含�
 * PhysCollide Lump **(Lump 29)** とPhysCollideSurface Lump **(Lump 49)** はゲームエンジンでエンティティの衝突に関する物理シミュレーションに関連しているようです。
 * VertNormal Lump **(Lump 30)** とVertNormalIndices Lump **(Lump 31)** は面のライトマップのスムージングに関連している可能性があります。
 * FaceMacroTextureInfo Lump **(Lump 47)** は、マップ内の面の数と同じ数の要素を持ったshort値の配列です。この要素に-1（0xFFFF）以外のものが含まれている場合、その面はTexDataStringTableのテクスチャ名へのインデックスを持っています。VRADでは、対応するテクスチャはワールドエクステント(?)にマッピングされ、その面のライトマップのモジュレーションとして使用されます。すべての面に適用されるベースマクロテクスチャ（<code>materials/macro/<i>mapname</i>/base.vtf</code>に位置する）が見つかることもあります。VTMBのマップだけがマクロテクスチャを使用しているようです。
-* LeafWaterData Lump **(Lump 36)** とLeafMinDistToWater Lump **(Lump 46 )** は、水のボリュームに関してプレイヤーの位置を決定するために用いられるようです。
+* LeafWaterData Lump **(Lump 36)** とLeafMinDistToWater Lump **(Lump 46)** は、水のボリュームに関してプレイヤーの位置を決定するために用いられるようです。
 * Primitives Lump **(Lump 37)** とPrimVerts Lump **(Lump 38)** は、「非ポリゴンプリミティブ」に関することに使用されます。これらはもともと水のメッシュを分割するためだけに用いられていたため、SDK Sourceでは「waterstrips」、「waterverts」、「waterindices」と呼ばれることもあります。現在は、面を構成する辺に「T字型接合」（2つの頂点からなる直線上に頂点がある状態）が含まれる場合に隣接する面との間にクラックが発生するのを防ぐために使用されています。PrimIndices Lumpは面の頂点間の三角形のセットを定義して、面をテセレーションします。そして、それらはPrimitives Lumpから参照されます。Primitive Lumpは面Lumpによって参照されます。現在のマップでは、PrimVerts Lumpは全く使用されていないようです（[参考]）。
 * HDRライティング情報を含んでいるバージョン20のファイルは、さらに4つの追加のLumpを持っていますが、現在その内容は正確には分かっていません。Lump 53は常に標準のライティングLump **(Lump 8)** と同じサイズであり、おそらく各ライトマップサンプルについて精度の高いデータを含んでいます。Lump 54はWorldlight Lump **(Lump 15)** と同じサイズであり、おそらくライトエンティティにおけるHDR関連のデータを含みます。
 
