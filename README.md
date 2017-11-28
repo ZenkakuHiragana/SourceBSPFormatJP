@@ -392,7 +392,7 @@ struct dheader_t
 	</tr>
 	<tr>
 		<td>Tactical Intervention</td>
-		<td>256bit XOR暗号化</td>
+		<td>256ビット XOR暗号化</td>
 	</tr>
 	<tr>
 		<td>22</td>
@@ -1415,7 +1415,7 @@ struct dleaf_t
 	*/
 };
 ```
-リーフの構造は子と平面への参照を持たないことを除いてノードのそれと似ています。追加の要素として`contents`フラグ（前述のブラシLumpを参照）と`cluster`（クラスタの数、下記参照）があります。`contents`フラグはリーフ内のブラシの中身を示すフラグです。`area`と`flags`は16bitの空間を共有していて、下の9bitが`area`、上の7bitが`flags`です。`area`はエリアナンバーを、`flags`はリーフに関するフラグを示します。`firstleafface`と`numleaffaces`はリーフ面の配列へのインデックスで、リーフ内に面がある時にどの面があるかを表します。`firstleafbrush`と`numleafbrushes`も同様にリーフブラシの配列を通してリーフ内にあるブラシへのインデックスを表します。
+リーフの構造は子と平面への参照を持たないことを除いてノードのそれと似ています。追加の要素として`contents`フラグ（前述のブラシLumpを参照）と`cluster`（クラスタの数、下記参照）があります。`contents`フラグはリーフ内のブラシの中身を示すフラグです。`area`と`flags`は16ビットの空間を共有していて、下位9ビットが`area`、上位7ビットが`flags`です。`area`はエリアナンバーを、`flags`はリーフに関するフラグを示します。`firstleafface`と`numleaffaces`はリーフ面の配列へのインデックスで、リーフ内に面がある時にどの面があるかを表します。`firstleafbrush`と`numleafbrushes`も同様にリーフブラシの配列を通してリーフ内にあるブラシへのインデックスを表します。
 
 `ambientLighitng`という要素は24バイトの`CompressedLightCube`構造体で、リーフ内にあるオブジェクトのライティングに関するものです。バージョン17のBSPファイルはdleaf_t構造体がアンビエントライティングのデータを省くように変更されていて、リーフごとのサイズが32バイトになっています。同じ構造体はバージョン20のBSPファイルでも用いられていて、LDRとHDRのためのアンビエントライティングの情報はおそらく新しいLumpであるLump 55とLump56に格納されています。
 
@@ -1667,7 +1667,7 @@ struct StaticPropLump_t
 	unsigned short	PropType;	 // モデル名の辞書へのインデックス
 	unsigned short	FirstLeaf;	 // リーフ配列へのインデックス
 	unsigned short	LeafCount;
-	unsigned char	Solid;		 // solidity type
+	unsigned char	Solid;		 // 固体性(?)の種類
 	unsigned char	Flags;
 	int		Skin;		 // モデルスキン番号
 	float		FadeMinDist;
@@ -1715,7 +1715,7 @@ struct ddispinfo_t
 	int			DispVertStart;		// LUMP_DISP_VERTSへのインデックス
 	int			DispTriStart;		// LUMP_DISP_TRISへのインデックス
 	int			power;			// サーフェスのサイズを示す（2^power - 1）
-	int			minTess;		// 最小のテセレーション(?)
+	int			minTess;		// 許容される最小のテセレーション(?)
 	float			smoothingAngle;		// ライティング スムージング角度
 	int			contents;		// サーフェス コンテンツ
 	unsigned short		MapFace;		// このDisplacementがどの面から得られたかを示すインデックス
@@ -1726,57 +1726,255 @@ struct ddispinfo_t
 	unsigned int		AllowedVerts[10];	// アクティブな頂点(?)
 };
 ```
-この構造体は176バイトの長さを持ちます。
+この構造体は176バイトの長さを持ちます。`startPosition`はDisplacementの最初のコーナーの座標です。`DispVertStart`と`DispTriStart`はDispVerts LumpとDispTris Lumpへのインデックスです。`power`はDisplacementの分割数を表します。許容値は2、3、4で、これらの値はDisplacementの各辺を4，8、16個に分割面することに対応する。この構造体は`EdgeNeighbors`および`CornerNeighbors`メンバを介してこのDisplacementの側面や角に隣接するDisplacementも参照します。隣接するDisplacementの順序には複雑な規則があります。詳細は*bspfile.h*のコメントを参照してください。`MapFace`は面の配列へのインデックスで、このDisplacementに変換される元になった面です。この面にはテクスチャ、Displacement全体の物理的位置、Displacementの境界を設定するために使用されます。
 
 
 <h3 id="dispverts">DispVerts</h3>
 
-DispVerts Lump **(Lump 33)** にはDisplacementの頂点データが含まれています。
+DispVerts Lump **(Lump 33)** にはDisplacementの頂点データが含まれていて、次のように与えられます。
+``` C++
+struct dDispVert
+{
+	Vector	vec;	// Displacementのボリュームを定めるベクトル場
+	float	dist;	// Displacement距離.
+	float	alpha;	// 「頂点ごとの」アルファ値
+};
+```
+`vec`はDisplacementの各頂点について、元の（平坦な）位置からの変位を表すベクトルを正規化したものです。`dist`は変位の距離です。`alpha`はその頂点でのテクスチャのアルファブレンド値です。
+
+<code>power</code>が<i>p</i>のDisplacementは、DispVertStartから(2<sup><i>p</i></sup> - 1)<sup>2</sup>個のDispVertsを参照します。
 
 
 <h3 id="disptris">DispTris</h3>
 
 DispTris Lump **(Lump 48)** にはDisplacementのメッシュの特定の三角形のプロパティに関する「三角形タグ」もしくはフラグが含まれています。
+``` C++
+struct dDispTri
+{
+	unsigned short Tags;	// Displacementの三角形タグ
+};
+```
+フラグが示すものは以下の通りです。
+
+Name | Value
+:--- | :---
+`DISPTRI_TAG_SURFACE` | 0x1
+`DISPTRI_TAG_WALKABLE` | 0x2
+`DISPTRI_TAG_BUILDABLE` | 0x4
+`DISPTRI_FLAG_SURFPROP1` | 0x8
+`DISPTRI_FLAG_SURFPROP2` | 0x10
+
+<code>power</code>が<i>p</i>のDisplacementには2×(2<sup><i>p</i></sup>)<sup>2</sup>個のDispTrisがあります。それらはおそらくその位置が歩行可能かどうかなど、Displacementを構成する各三角形のプロパティを示すために使用されます。
+
+DispInfoは1つのマップにつき2048個の制限があり、DispVertsとDispTrisの制限は2048個すべてのDisplacementの`power`が4である場合の個数に制限されています（つまり、もっとも細かく分割された場合の個数です）。
+
+Displacementに関連する他のデータは、DispLightmapAlphas Lump **(Lump 32)** とDispLightmapSamplePos Lump **(Lump 34)** であり、Displacementのライティングに関連していると思われます。
 
 
 <h2 id="pakfile">Pakfile</h2>
 
-Pakfile Lump **(Lump 40)** はBSPファイルに埋め込まれた複数のファイルを格納できる特別なLumpです。
+Pakfile Lump **(Lump 40)** はBSPファイルに埋め込まれた複数のファイルを格納できる特別なLumpです。通常、マップ内のenv_cubemapエンティティからの反射マップを格納するための特別なテクスチャ（.vtf）ファイルとマテリアル（.vmt）ファイルが含まれています。これらのファイルは[`buildcubemaps`]コンソールコマンドが実行された時にビルドされてPakfile Lumpに格納されます。Pakfileにはマップで使用されるカスタムテクスチャやPropのようなものも任意で含めることができ、それらは[BSPZIP]プログラム（もしくは[Pakrat]のような代替プログラム）を用いてBSPファイル内に配置されます。また、これらのファイルはゲームエンジンのファイルシステムに統合されて、外部のファイルが使用される前に優先的に読み込まれます。
+
+Pakfile Lumpの形式は、圧縮が指定されていない場合（つまり、個々のファイルが非圧縮形式で保存されている場合）はZip圧縮ユーティリティで用いられる形式と同じです。Pakfile Lumpを展開すると、WinZipなどのプログラムで開くことができるようになります。
+
+ヘッダファイル*public/zip_uncompressed.h*は、Pakfile Lumpに存在する構造体を定義します。Lumpの最後の要素は`ZIP_EndOfCentralDirRecord`構造体です。これはその構造体の直前に、Pakに存在する各ファイルに対して1つずつある`ZIP_FileHeader`構造体の配列を指します。これらのヘッダはそれぞれ、ファイルのデータが後ろに続いている`ZIP_LocalFileHeader`構造体を指し示します。
+
+Pakfile Lumpは通常、BSPファイルの最後の要素です。
 
 
 <h2 id="cubemap">Cubemap</h2>
 
 Cubemap Lump **(Lump 42)** は16バイトの`dcubemapsample_t`構造体の配列です。
+``` C++
+struct dcubemapsample_t
+{
+	int		origin[3];	// 最も近い整数に丸められたライトの位置
+	int	        size;		// Cubemapの解像度（0: デフォルト）
+};
+```
+<code>dcubemapsample_t</code>構造体は、マップ内のenv_cubemapエンティティの場所を定義します。<code>origin</code>メンバには、Cubemapの整数座標x、y、zが含まれ、<code>size</code>メンバは2<sup><code>size</code> - 1</sup>ピクセルの正方形として指定されるCubemapの解像度で、0の場合はデフォルトのサイズである6（32×32ピクセル）になります。ファイルには最大1024個のCubemapが存在します（<code>MAX_MAP_CUBEMAPSAMPLES</code>）。
+
+`buildcubemap`コンソールコマンドが実行されると、各Cubemapエンティティの位置でマップのスナップショットが6つ（各方向について1つずつ）撮影されます。これらのスナップショットはマルチフレームテクスチャファイル（.vtf）に格納され、Pakfile Lump（上記）に追加されます。テクスチャ名は`cX_Y_Z.vtf`で、（X, Y, Z）はCubemapの（整数）座標です。
+
+環境マッピングされたマテリアルを含む面（例えば光沢のあるテクスチャ）は、マテリアル名を介してCubemapを参照します。（例えば）<code>walls/shiny.vmt</code>と名前の付いたマテリアルは書き換えられて（新しいTexinfoとTexdataが作成されて）、変更されたマテリアル名である<code>maps/<i>mapname</i>/walls/shiny_X_Y_Z.vmt</code>を参照するようになります。ここで（X、Y、Z）は 前述したようにCubemapの座標です。この.vmtファイルはPakfileにも格納され、$envmapプロパティを使用してCubemapの.vtfファイルを参照します。
+
+バージョン20のファイルにはさらに`cX_Y_Z_hdr.vtf`がPakfile Lumpに追加されます。これにはRGBA16161616F形式（チャンネルごとに16ビット）のHDRテクスチャファイルが含まれています。
 
 
 <h2 id="overlay">オーバーレイ</h2>
 
-単純なデカール（infodecalエンティティ）とは異なり、info_overlayはエンティティLumpから削除されて、オーバーレイLump **(Lump 45)** に分けて保存されます。
+単純なデカール（infodecalエンティティ）とは異なり、info_overlayはエンティティLumpから削除されて、オーバーレイLump **(Lump 45)** に分けて保存されます。この構造体はHammerのエンティティのプロパティをほぼ正確に反映しています。
+``` C++
+struct doverlay_t
+{
+	int		Id;
+	short		TexInfo;
+	unsigned short	FaceCountAndRenderOrder;
+	int		Ofaces[OVERLAY_BSP_FACE_COUNT];
+	float		U[2];
+	float		V[2];
+	Vector		UVPoints[4];
+	Vector		Origin;
+	Vector		BasisNormal;
+};
+```
+`FaceCountAndRenderOrder`メンバは2つの部分に分かれています。下位14ビットはオーバーレイが表示される面の数で、上位2ビットはオーバーレイの表示順序です（重なったオーバーレイの場合）。`Ofaces`は要素数64の配列で（`OVERLAY_BSP_FACE_COUNT`）、オーバーレイが表示される面へのインデックスが格納されています。他の要素はオーバーレイのテクスチャ、スケール、向きを設定します。1つのファイルには最大512個のオーバーレイが存在します（`MAX_MAP_OVERLAYS`）。また、Dota 2ではオーバーレイ数の制限が大幅に増加しています。
 
 
 <h2 id="lighting">ライティング</h2>
 
-ライティングLump **(Lump 8)** はマップの面の静的ライトマップサンプルを格納するために使用されます。
+ライティングLump **(Lump 8)** はマップの面の静的ライトマップサンプルを格納するために使用されます。各ライトマップサンプルは、テクスチャピクセルの色と乗算する色合いであり、様々な強度の照明を生成します。これらのライトマップはマップコンパイル時のVRAD処理中に作成され、`dface_t`構造体から参照されます。現在のライティングLumpのバージョンは1です。
+
+`dface_t`では`styles[]`配列で定義された最大4つのライトスタイルを持つことができます（ただし値255はライトスタイルがないことを示す）。面の各方向についてのルクセル数は、2つの`LightmapTextureSizeInLuxels[]`メンバの値（+ 1）によって与えられ、面ごとのルクセルの総和は次のようになります。
+
+`(LightmapTextureSizeInLuxels[0] + 1) * (LightmapTextureSizeInLuxels[1] + 1)`
+
+面はそれぞれ、`dface_t`の`lightofs`メンバによってライティングLump内のオフセットを持ちます（もし、スカイボックスやnodrawなどの不可視のテクスチャであるなどの理由でその面にライティング情報が使われていない場合、`lightofs`は-1です）。ライトマップサンプルの総数は（*ライトスタイル数*）×（*ルクセル数*）で、各サンプルは`ColorRGBExp32`構造体で与えられます。
+``` C++
+struct ColorRGBExp32
+{
+	byte r, g, b;
+	signed char exponent;
+};
+```
+この構造体から、それぞれの色成分に2<sup><code><i>exponent</i></code></sup>をかけることで標準のRGB形式を得ることができます。バンプマップ付きのテクスチャを持つ面の場合、おそらくバンプマップを計算するためのサンプルを含むためライトマップサンプルの数は通常の4倍になります。
+
+`lightofs`で参照されるサンプルグループの直前には、面のライティングの平均値がライトスタイルごとに、`styles[]`配列で与えられた順番とは逆の順番になって存在しています。
+
+バージョン20のBSPファイルには、同じサイズの2つ目のライティングLump **(Lump 53)** が含まれています。これは、各ライトマップサンプルに対してより正確な（より高精度の）HDRデータを格納するものと推定されています。フォーマットは現在不明ですが、1サンプルにつき32ビットです。
+
+ライティングLumpの最大サイズは0x1000000バイトです（`MAX_MAP_LIGHTING`）。すなわち、16MBです。
 
 
 <h2 id="ambientlighting">アンビエントライティング</h2>
 
-アンビエントライティングLump **(Lump 55とLump 56)** は、BSPバージョン20以降に存在します。
+アンビエントライティングLump **(Lump 55とLump 56)** は、BSPバージョン20以降に存在します。Lump 55はHDRライティングに使用され、Lump 56はLDRライティングに使用されます。これらのLumpは、Volumetric [Ambient Lighting]情報（例えば、NPC、ビューモデル、静的でないPropなどのエンティティのためのライティング情報）を格納するために使われます。バージョン20より前はこのデータをリーフLumpの`dleaf_t`構造体に格納していましたが、この新しいLumpよりもはるかに低い精度でした。
+
+アンビエントライティングLumpは両方とも`dleafambientlighting_t`構造体の配列です。
+``` C++
+struct dleafambientlighting_t
+{
+	CompressedLightCube	cube;
+	byte x;		// 固定小数点で、リーフのバウンディングボックスの割合
+	byte y;		// 固定小数点で、リーフのバウンディングボックスの割合
+	byte z;		// 固定小数点で、リーフのバウンディングボックスの割合
+	byte pad;	// 未使用
+};
+```
+各リーフは`dleafambientlighting_t`構造体のうちのいくつかに関連付けられています。各構造体は`x`、`y`、`z`メンバによって指定された位置にある周囲光データのキューブを含みます。これらの座標はリーフが持つバウンディングボックスの割合として格納されます。つまり、xが0の場合はリーフの最西端で、255の場合は最東端、128の場合は中心を表します。
+
+各サンプルのライティングデータは、`CompressedLightCube`構造体で表されます。これは、前のセクションで説明した`ColorRGBExp32`構造体が6つ格納された配列です。
+``` C++
+struct CompressedLightCube
+{
+	ColorRGBExp32 m_Color[6];
+};
+```
+配列中の各ライティングサンプルは、3D空間内の各座標軸方向から受ける光の量に対応します。
+
+コンパイル時に、[VRAD]は各リーフで周囲光のサンプルを取る位置ランダムに生成し、各サンプル点についてのライティング情報を`dleafambientlighting_t`構造体へ格納します。各リーフと周囲光のサンプルを関連付けるために、アンビエントライティングインデックスLump **(Lump 51とLump 32)** が用いられます。Lump 51はHDRについてのアンビエントライティングインデックス情報を、Lump 52はLDRについての情報を格納します。
+
+アンビエントライティングインデックスLumpは`dleafambientindex_t`構造体の配列です。
+``` C++
+struct dleafambientindex_t
+{
+	unsigned short ambientSampleCount;
+	unsigned short firstAmbientSample;
+};
+```
+この配列のN番目の`dleafambientindex_t`構造体は常に`dleaf_t`配列のN番目に対応します。`ambientSampleCount`フィールドは対応するリーフに関連する周囲光の数で、`firstAmbientSample`はアンビエントライティング配列へのインデックスで、これは関連付けられたリーフの最初の周囲光サンプルを参照します。
 
 
 <h2 id="occlusion">オクルージョン</h2>
 
-オクルージョンLump **(Lump 9)** にはポリゴンジオメトリと[func_occluder]エンティティで使用されるいくつかのフラグが含まれています。
+オクルージョンLump **(Lump 9)** にはポリゴンジオメトリと[func_occluder]エンティティで使用されるいくつかのフラグが含まれています。他のブラシエンティティとは異なり、func_occluderは[エンティティLump](#entity)で「model」キーを使用しません。代わりに、そのブラシはコンパイル処理中にエンティティから分離され、`occludernum`という数値としてオクルーダーキーが割り当てられます。`tools/[toolsoccluder]`または`tools/[toolstrigger]`のテクスチャが付いたブラシの側面は、オクルーダーキーとともに保存され、このLumpにいくつかの追加情報が格納されます。
+
+このLumpは3つに分割され、オクルーダーの総数に、一定のサイズの`doccluderdata_t`フィールドの配列が続いたものから始まります。次のパートは別の整数値で始まり、こちらはオクルーダーの総ポリゴン数です。続いてその数だけ`doccluderpolydata_t`フィールドの配列が続きます。3つ目のパートはオクルーダーの総頂点数を表す整数から始まり、頂点インデックスが続きます。
+``` C++
+struct doccluder_t
+{
+	int			count;
+	doccluderdata_t		data[count];
+	int			polyDataCount;
+	doccluderpolydata_t	polyData[polyDataCount];
+	int			vertexIndexCount;
+	int			vertexIndices[vertexIndexCount];
+};
+```
+`doccluderdata_t`構造体にはオクルーダーのフラグと寸法、そしてその領域が含まれています。`firstpoly`は`polycount`を含む`doccluderpolydata_t`への最初のインデックスです。
+``` C++
+struct doccluderdata_t
+{
+	int	flags;
+	int	firstpoly;	// doccluderpolysへのインデックス
+	int	polycount;	// ポリゴンの数
+	Vector	mins;	        // 全頂点の最小値
+	Vector	maxs;	        // 全頂点の最大値
+	// v1から
+	int	area;
+};
+```
+オクルーダーポリゴンは`doccluderpolydata_t`構造体に格納されていて、`firstvertexindex`フィールドを含みます。これはオクルーダーの頂点配列へのインデックスで、オクルーダーの頂点配列の要素は[頂点Lump](#vertex) **(Lump 3)** の配列へのインデックスとなっています。頂点インデックスの総数は`vertexcount`に格納されます。
+``` C++
+struct doccluderpolydata_t
+{
+	int	firstvertexindex;	// doccludervertindicesへのインデックス
+	int	vertexcount;		// 頂点インデックスの数
+	int	planenum;
+};
+```
 
 
 <h2 id="physics">Physics</h2>
 
 Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含まれています。
 
+このLumpはひと続きの*model*で構成されていて、各*model*は以下から構成されます。
+* `dphysmodel_t`ヘッダ
+	``` C++
+	struct dphysmodel_t
+	{
+		int modelIndex;  // おそらくこの物理モデルを適用するモデルへのインデックス？
+		int dataSize;    // コリジョンデータセクションの合計サイズ
+		int keydataSize; // テキストセクションのサイズ
+		int solidCount;  // コリジョンデータセクションの数
+	};
+	```
+* 一連のコリジョンデータセクション（`compactsurfaceheader_t`を含む）
+* テキストセクション
+
+このLumpは`modelIndex`が-1に設定された`dphysmodel_t`構造体で終了します。
+
+最後の2つの部分は、[PHY]ファイル形式と同じに見えます。すなわち、正確な内容は不明です。`compactsurfaceheader_t`構造体には各コリジョンデータセクション（ヘッダの残りも含む）のサイズが含まれているので、このLumpは次のように解析できます。
+``` C++
+   while(true) {
+       header = readHeader();
+       if(header.modelIndex == -1)
+           break;
+       
+       for(int k = 0; k < header.solidCount; k++) {
+           size = read4ByteInt();
+           collisionData = readBytes(size);
+       }
+       
+       textData = readBytes(header.keydataSize);
+   }
+```
+
 
 <h2 id="other">その他</h2>
 
 **To do:** これらの情報の一部は推測に基づくものである可能性があるため、更なる調査が必要です。
+
+* Worldlights Lump **(Lump 15)** にはワールドにあるそれぞれのスタティックライトエンティティに関する情報が含まれていて、移動するエンティティの半動的ライティングを提供するために使用されているようです。
+* Area Lump **(Lump 20)** は、Areaportal Lump **(Lump 21)** を参照し、func_areaportalおよびfunc_areaportalwindowエンティティとともに使用することでマップをレンダリングするかしないかを切り替えられる仕切りを定義します。
+* Portal Lump **(Lump 22)** 、Cluster Lump **(Lump 23)** 、PortalVerts Lump **(Lump 24)** 、ClusterPortals **(Lump 25)** 、ClipPortalVerts **(Lump 41)** はコンパイルのVVIS処理でどのクラスタがあるクラスタから見ることができるかを確認するために使用されます。クラスタはマップ内のプレイヤーが進入可能なリーフ ボリュームです（上記）。「ポータル」はクラスタまたはリーフが隣接する部分のポリゴン境界のことです。この情報の大部分はVRADプログラムによってスタティックライティングを計算するためにも用いられ、その後はBSPファイルから削除されます。
+* PhysCollide Lump **(Lump 29)** とPhysCollideSurface Lump **(Lump 49)** はゲームエンジンでエンティティの衝突に関する物理シミュレーションに関連しているようです。
+* VertNormal Lump **(Lump 30)** とVertNormalIndices Lump **(Lump 31)** は面のライトマップのスムージングに関連している可能性があります。
+* FaceMacroTextureInfo Lump **(Lump 47)** は、マップ内の面の数と同じ数の要素を持ったshort値の配列です。この要素に-1（0xFFFF）以外のものが含まれている場合、その面はTexDataStringTableのテクスチャ名へのインデックスを持っています。VRADでは、対応するテクスチャはワールドエクステント(?)にマッピングされ、その面のライトマップのモジュレーションとして使用されます。すべての面に適用されるベースマクロテクスチャ（<code>materials/macro/<i>mapname</i>/base.vtf</code>に位置する）が見つかることもあります。VTMBのマップだけがマクロテクスチャを使用しているようです。
+* LeafWaterData Lump **(Lump 36)** とLeafMinDistToWater Lump **(Lump 46 )** は、水のボリュームに関してプレイヤーの位置を決定するために用いられるようです。
+* Primitives Lump **(Lump 37)** とPrimVerts Lump **(Lump 38)** は、「非ポリゴンプリミティブ」に関することに使用されます。これらはもともと水のメッシュを分割するためだけに用いられていたため、SDK Sourceでは「waterstrips」、「waterverts」、「waterindices」と呼ばれることもあります。現在は、面を構成する辺に「T字型接合」（2つの頂点からなる直線上に頂点がある状態）が含まれる場合に隣接する面との間にクラックが発生するのを防ぐために使用されています。PrimIndices Lumpは面の頂点間の三角形のセットを定義して、面をテセレーションします。そして、それらはPrimitives Lumpから参照されます。Primitive Lumpは面Lumpによって参照されます。現在のマップでは、PrimVerts Lumpは全く使用されていないようです（[参考]）。
+* HDRライティング情報を含んでいるバージョン20のファイルは、さらに4つの追加のLumpを持っていますが、現在その内容は正確には分かっていません。Lump 53は常に標準のライティングLump **(Lump 8)** と同じサイズであり、おそらく各ライトマップサンプルについて精度の高いデータを含んでいます。Lump 54はWorldlight Lump **(Lump 15)** と同じサイズであり、おそらくライトエンティティにおけるHDR関連のデータを含みます。
 
 
 [Source BSP File Formatのページ]: https://developer.valvesoftware.com/wiki/Source_BSP_File_Format "Source BSP File Format - Valve Developer Community"
@@ -1825,9 +2023,13 @@ Physcolldie Lump **(Lump 29)** にはワールドの物理的なデータが含�
 [Left 4 Dead]: https://developer.valvesoftware.com/wiki/Left_4_Dead "Left 4 Dead - Valve Developer Community"
 [Left 4 Dead 2]: https://developer.valvesoftware.com/wiki/Left_4_Dead_2 "Left 4 Dead 2 - Valve Developer Community"
 [prop_detail]: https://developer.valvesoftware.com/wiki/Prop_detail "prop_detail - Valve Developer Community"
-[buildcubemaps]: https://developer.valvesoftware.com/wiki/Cubemaps#Building "Cubemap - Valve Developer Community"
+[`buildcubemaps`]: https://developer.valvesoftware.com/wiki/Cubemaps#Building "Cubemap - Valve Developer Community"
 [BSPZIP]: https://developer.valvesoftware.com/wiki/BSPZIP "BSPZIP - Valve Developer Community"
 [Pakrat]: https://developer.valvesoftware.com/wiki/Pakrat "Pakrat - Valve Developer Community"
-[アンビエントライティング]: https://developer.valvesoftware.com/wiki/Ambient_light "Ambient light - Valve Developer Community"
+[Ambient Lighting]: https://developer.valvesoftware.com/wiki/Ambient_light "Ambient light - Valve Developer Community"
 [VRAD]: https://developer.valvesoftware.com/wiki/VRAD "VRAD - Valve Developer Community"
 [func_occluder]: https://developer.valvesoftware.com/wiki/Func_occluder "func_occluder - Valve Developer Community"
+[toolsoccluder]: https://developer.valvesoftware.com/wiki/Tool_textures#occluder "Tool textures: Valve Developer Community"
+[toolstrigger]: https://developer.valvesoftware.com/wiki/Tool_textures#trigger "Tool textures: Valve Developer Community"
+[PHY]: https://developer.valvesoftware.com/wiki/PHY "PHY - Valve Developer Community"
+[参考]: http://web.archive.org/web/20071110230828/http://www.chatbear.com/board.plm?a=viewthread&b=4991&t=137,1118051039,3296&s=0&id=862840 "What are \"waterindices\"? - Source Coding \[VERC Network Forums\] - WebArchive.org"
