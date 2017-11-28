@@ -1443,7 +1443,7 @@ Texinfo Lump **(Lump 6)** は`texinfo_t`構造体の配列です。
 struct texinfo_t
 {
 	float	textureVecs[2][4];	// [s/t][xyz オフセット]
-	float	lightmapVecs[2][4];	// [s/t][xyz オフセット] - 長さの単位は units of texels/area
+	float	lightmapVecs[2][4];	// [s/t][xyz オフセット] - 長さの単位はtexels/area
 	int	flags;			// miptex フラグ オーバーライド
 	int	texdata;		// テクスチャ名やサイズなどへのポインタ
 }
