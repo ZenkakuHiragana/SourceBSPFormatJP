@@ -1756,7 +1756,7 @@ struct dDispTri
 ```
 フラグが示すものは以下の通りです。
 
-Name | Value
+名前 | 値
 :--- | :---
 `DISPTRI_TAG_SURFACE` | 0x1
 `DISPTRI_TAG_WALKABLE` | 0x2
