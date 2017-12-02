@@ -1742,7 +1742,7 @@ struct dDispVert
 ```
 `vec`はDisplacementの各頂点について、元の（平坦な）位置からの変位を表すベクトルを正規化したものです。`dist`は変位の距離です。`alpha`はその頂点でのテクスチャのアルファブレンド値です。
 
-<code>power</code>が<i>p</i>のDisplacementは、DispVertStartから(2<sup><i>p</i></sup> - 1)<sup>2</sup>個のDispVertsを参照します。
+<code>power</code>が<i>p</i>のDisplacementは、DispVertStartから(2<sup><i>p</i></sup> + 1)<sup>2</sup>個のDispVertsを参照します。
 
 
 <h3 id="disptris">DispTris</h3>
