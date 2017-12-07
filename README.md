@@ -1726,7 +1726,7 @@ struct ddispinfo_t
 	unsigned int		AllowedVerts[10];	// アクティブな頂点(?)
 };
 ```
-この構造体は176バイトの長さを持ちます。`startPosition`はDisplacementの最初のコーナーの座標です。`DispVertStart`と`DispTriStart`はDispVerts LumpとDispTris Lumpへのインデックスです。`power`はDisplacementの分割数を表します。許容値は2、3、4で、これらの値はDisplacementの各辺を4，8、16個に分割面することに対応する。この構造体は`EdgeNeighbors`および`CornerNeighbors`メンバを介してこのDisplacementの側面や角に隣接するDisplacementも参照します。隣接するDisplacementの順序には複雑な規則があります。詳細は*bspfile.h*のコメントを参照してください。`MapFace`は面の配列へのインデックスで、このDisplacementに変換される元になった面です。この面にはテクスチャ、Displacement全体の物理的位置、Displacementの境界を設定するために使用されます。
+この構造体は176バイトの長さを持ちます。`startPosition`はDisplacementの最初のコーナーの座標です。`DispVertStart`と`DispTriStart`はDispVerts LumpとDispTris Lumpへのインデックスです。`power`はDisplacementの分割数を表します。許容値は2、3、4で、これらの値はDisplacementの各辺を4，8、16本に分割することに対応しています。この構造体は`EdgeNeighbors`および`CornerNeighbors`メンバを介してこのDisplacementの側面や角に隣接するDisplacementも参照します。隣接するDisplacementの順序には複雑な規則があります。詳細は*bspfile.h*のコメントを参照してください。`MapFace`は面の配列へのインデックスで、このDisplacementに変換される元になった面です。この面にはテクスチャ、Displacement全体の物理的位置、Displacementの境界を設定するために使用されます。
 
 
 <h3 id="dispverts">DispVerts</h3>
