@@ -1327,7 +1327,7 @@ struct dbrush_t
 	<tr><td><code>CONTENTS_AREAPORTAL</code></td><td>0x8000</td><td>以下のフラグは不可視で、ブラシを侵食しない</td></tr>
 	<tr><td><code>CONTENTS_PLAYERCLIP</code></td><td>0x10000</td><td></td></tr>
 	<tr><td><code>CONTENTS_MONSTERCLIP</code></td><td>0x20000</td><td></td></tr>
-	<tr><td><code>CONTENTS_CURRENT_0</code></td><td>0x40000</td><td rowspan="6"></td>CURRENT系は他のフラグに追加されるもので、複数追加されることもある</tr>
+	<tr><td><code>CONTENTS_CURRENT_0</code></td><td>0x40000</td><td rowspan="6">CURRENT系は他のフラグに追加されるもので、複数追加されることもある</td></tr>
 	<tr><td><code>CONTENTS_CURRENT_90</code></td><td>0x80000</td></tr>
 	<tr><td><code>CONTENTS_CURRENT_180</code></td><td>0x100000</td></tr>
 	<tr><td><code>CONTENTS_CURRENT_270</code></td><td>0x200000</td></tr>
